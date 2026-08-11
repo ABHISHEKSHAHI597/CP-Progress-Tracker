@@ -99,7 +99,7 @@ function Admin() {
       <div className="flex items-center justify-between">
 
         <div>
-          <h1 className="text-5xl font-extrabold bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-500 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-extrabold bg-linear-to-r from-blue-400 via-cyan-400 to-purple-500 bg-clip-text text-transparent">
             Admin Dashboard
           </h1>
 
@@ -184,7 +184,7 @@ function Admin() {
           <button
             onClick={addUser}
             disabled={loading}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 rounded-2xl font-semibold flex items-center gap-3 hover:scale-105 transition"
+            className="bg-linear-to-r from-blue-600 to-purple-600 px-8 rounded-2xl font-semibold flex items-center gap-3 hover:scale-105 transition"
           >
             <FaPlus />
 

@@ -41,11 +41,11 @@ function Home() {
   const averageRating =
     totalUsers > 0
       ? Math.round(
-          users.reduce(
-            (sum, user) => sum + (user.rating || 0),
-            0
-          ) / totalUsers
-        )
+        users.reduce(
+          (sum, user) => sum + (user.rating || 0),
+          0
+        ) / totalUsers
+      )
       : 0;
 
   if (loading) {
@@ -72,7 +72,7 @@ function Home() {
 
       {/* Stats */}
 
-      <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-5 mb-10">
+      <div className="grid xl:grid-cols-5 lg:grid-cols-3 md:grid-cols-2 gap-5 mb-10">
         <StatsCard
           title="Tracked Users"
           value={totalUsers}
@@ -86,15 +86,28 @@ function Home() {
         />
 
         <StatsCard
-          title="Upcoming Contests"
-          value="0"
+          title="Average Rating"
+          value={averageRating}
+          icon={<FaChartLine />}
+        />
+
+        <StatsCard
+          title="Highest Rating"
+          value={
+            users.length
+              ? Math.max(...users.map(u => u.rating || 0))
+              : 0
+          }
           icon={<FaTrophy />}
         />
 
         <StatsCard
-          title="Average Rating"
-          value={averageRating}
-          icon={<FaChartLine />}
+          title="Total Contests"
+          value={users.reduce(
+            (sum, user) => sum + (user.contestCount || 0),
+            0
+          )}
+          icon={<FaTrophy />}
         />
       </div>
 
@@ -111,8 +124,7 @@ function Home() {
               key={user._id}
               user={{
                 ...user,
-
-                cfId: user._id,
+                cfId: user.cfId,
 
                 contests:
                   user.contestCount || 0,

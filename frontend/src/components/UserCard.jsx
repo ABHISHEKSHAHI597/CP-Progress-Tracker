@@ -37,10 +37,6 @@ function UserCard({ user }) {
               <FaCheckCircle className="text-blue-400 text-xl" />
             </div>
 
-            <p className="text-slate-400 text-lg">
-              ID: {user.cfId}
-            </p>
-
             <p className="text-orange-400 text-2xl mt-2 font-medium">
               {user.rank}
             </p>

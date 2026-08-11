@@ -60,19 +60,19 @@ function Home() {
     <div>
       {/* Header */}
 
-      <div className="mb-10">
-        <h1 className="text-5xl font-bold">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold">
           CP Progress Tracker
         </h1>
 
-        <p className="text-slate-400 mt-3 text-lg">
+        <p className="text-slate-400 mt-2 text-base">
           Monitor Codeforces progress, ratings and contest performance.
         </p>
       </div>
 
       {/* Stats */}
 
-      <div className="grid xl:grid-cols-5 lg:grid-cols-3 md:grid-cols-2 gap-5 mb-10">
+      <div className="grid xl:grid-cols-5 lg:grid-cols-3 md:grid-cols-2 gap-4 mb-8">
         <StatsCard
           title="Tracked Users"
           value={totalUsers}
@@ -114,11 +114,11 @@ function Home() {
       {/* Users */}
 
       <div>
-        <h2 className="text-3xl font-bold mb-8">
+        <h2 className="text-2xl font-bold mb-5">
           Tracked Users
         </h2>
 
-        <div className="space-y-8">
+        <div className="space-y-4">
           {users.map((user) => (
             <UserCard
               key={user._id}

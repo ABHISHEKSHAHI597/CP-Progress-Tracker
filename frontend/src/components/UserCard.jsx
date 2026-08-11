@@ -127,8 +127,13 @@ function UserCard({ user }) {
       {/* LAST 5 PROBLEMS */}
 
       {user.lastFiveSolved?.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-4">
-          {user.lastFiveSolved.map((problem, idx) => (
+        <div className="mt-5">
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">
+            Last 5 Solved
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            {user.lastFiveSolved.map((problem, idx) => (
             <a
               key={idx}
               href={`https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}`}
@@ -153,7 +158,8 @@ function UserCard({ user }) {
                 {problem.rating}
               </span>
             </a>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 

@@ -5,6 +5,30 @@ import {
 } from "react-icons/fa";
 
 function UserCard({ user }) {
+  const getLastOnline = (dateString) => {
+  const now = new Date();
+  const lastSeen = new Date(dateString);
+
+  const diffMs = now - lastSeen;
+
+  const minutes = Math.floor(diffMs / (1000 * 60));
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (minutes < 60) {
+    return `${minutes} min ago`;
+  }
+
+  if (hours < 24) {
+    return `${hours}h ago`;
+  }
+
+  if (days === 1) {
+    return "Yesterday";
+  }
+
+  return `${days} days ago`;
+};
   return (
     <motion.div
       whileHover={{ y: -4 }}
@@ -96,67 +120,53 @@ function UserCard({ user }) {
 
         <Stat
           title="Last Online"
-          value={user.lastOnline}
+          value={getLastOnline(user.lastOnline)}
         />
       </div>
 
       {/* LAST 5 PROBLEMS */}
 
-      <div className="mt-10">
-        <h3 className="text-2xl font-semibold mb-5">
-          Last 5 Problems Solved
-        </h3>
+      <div className="flex flex-wrap gap-4 mt-4">
+        {user.lastFiveSolved?.map((problem, idx) => (
+          <a
+            key={idx}
+            href={`https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}`}
+            target="_blank"
+            rel="noreferrer"
+            className="
+      px-5
+      py-3
+      rounded-full
+      bg-slate-800
+      hover:bg-slate-700
+      transition
+      border border-slate-700"
+          >
+            <span className="font-semibold">
+              {problem.contestId}
+              {problem.index}
+            </span>
 
-        <div className="flex flex-wrap gap-3">
-          {user.lastFiveSolved.map((problem) => (
-            <div
-              key={problem.name}
-              className="
-              bg-slate-800
-              border
-              border-slate-700
-              rounded-full
-              px-4
-              py-2
-              flex
-              items-center
-              gap-2
-              "
-            >
-              <span>{problem.name}</span>
-
-              <span className="text-purple-400 font-semibold">
-                {problem.rating}
-              </span>
-            </div>
-          ))}
-        </div>
+            <span className="ml-2 text-purple-400">
+              {problem.rating}
+            </span>
+          </a>
+        ))}
       </div>
 
       {/* FOOTER */}
 
-      <button
-        className="
-        mt-8
-        w-full
-        py-4
-        rounded-xl
-        bg-linear-to-r
-        from-blue-600
-        to-indigo-600
-        hover:opacity-90
-        transition
-        font-semibold
-        flex
-        justify-center
-        items-center
-        gap-2
-        "
+      <a
+        href={`https://codeforces.com/profile/${user.handle}`}
+        target="_blank"
+        rel="noreferrer"
+        className="w-full mt-8 flex justify-center items-center
+  py-5 rounded-2xl
+  bg-linear-to-r from-blue-600 to-purple-600
+  hover:opacity-90 transition"
       >
         View Profile
-
-        <FaExternalLinkAlt size={12} />
-      </button>
+      </a>
     </motion.div>
   );
 }

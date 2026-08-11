@@ -1,16 +1,17 @@
 import dotenv from "dotenv";
-
 dotenv.config();
 
-import connectDB from "./src/db/connectDB.js";
 import app from "./src/app.js";
+import connectDB from "./src/db/connectDB.js";
 
-const PORT = process.env.PORT || 5000;
+import {
+  startCronJob,
+} from "./src/cron/refreshUsers.js";
 
 connectDB();
 
-app.listen(PORT, () => {
-  console.log(
-    `Server running on port ${PORT}`
-  );
+app.listen(5000, () => {
+  console.log("Server running on port 5000");
+
+  startCronJob();
 });

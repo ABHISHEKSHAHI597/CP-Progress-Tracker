@@ -28,7 +28,7 @@ function Sidebar() {
     },
     {
       name: "Admin",
-      path: "/admin",
+      path: "/login",
       icon: <FaUserShield />,
     },
   ];

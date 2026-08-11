@@ -62,13 +62,18 @@ export const addUser = async (req, res) => {
   }
 };
 
-export const getUsers = async (
-  req,
-  res
-) => {
-  const users = await User.find();
+export const getUsers = async (req, res) => {
+  try {
+    const users = await User.find().sort({
+      rating: -1,
+    });
 
-  res.json(users);
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
 export const deleteUser = async (

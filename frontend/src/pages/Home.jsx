@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import API from "../services/api";
+
 import StatsCard from "../components/StatsCard";
 import UserCard from "../components/UserCard";
 
@@ -9,66 +12,54 @@ import {
 } from "react-icons/fa";
 
 function Home() {
-  const users = [
-    {
-      handle: "tourist",
-      cfId: 345897,
-      rank: "Legendary Grandmaster",
-      maxRank: "Legendary GM",
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-      rating: 3847,
-      maxRating: 3979,
+  const fetchUsers = async () => {
+    try {
+      const res = await API.get("/users");
 
-      contribution: 238,
-      friendOfCount: 96,
+      setUsers(res.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      totalSolved: 10453,
-      solved30: 184,
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-      contests: 214,
-      lastOnline: "2h ago",
-      memberSince: "Aug 2012",
+  const totalUsers = users.length;
 
-      lastFiveSolved: [
-        { name: "1988D", rating: 2200 },
-        { name: "1935E", rating: 2100 },
-        { name: "1988C", rating: 2000 },
-        { name: "1944F", rating: 1900 },
-        { name: "1986B", rating: 1800 },
-      ],
-    },
+  const totalSolved = users.reduce(
+    (sum, user) => sum + (user.totalSolved || 0),
+    0
+  );
 
-    {
-      handle: "Benq",
-      cfId: 157503,
-      rank: "International Grandmaster",
-      maxRank: "International GM",
+  const averageRating =
+    totalUsers > 0
+      ? Math.round(
+          users.reduce(
+            (sum, user) => sum + (user.rating || 0),
+            0
+          ) / totalUsers
+        )
+      : 0;
 
-      rating: 3532,
-      maxRating: 3635,
-
-      contribution: 182,
-      friendOfCount: 73,
-
-      totalSolved: 8923,
-      solved30: 132,
-
-      contests: 182,
-      lastOnline: "5h ago",
-      memberSince: "Dec 2013",
-
-      lastFiveSolved: [
-        { name: "1977E", rating: 2100 },
-        { name: "1932F", rating: 2000 },
-        { name: "1975D", rating: 1900 },
-        { name: "1956C", rating: 1800 },
-        { name: "1936B", rating: 1600 },
-      ],
-    },
-  ];
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[70vh]">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div>
+      {/* Header */}
+
       <div className="mb-10">
         <h1 className="text-5xl font-bold">
           CP Progress Tracker
@@ -79,44 +70,62 @@ function Home() {
         </p>
       </div>
 
+      {/* Stats */}
+
       <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-5 mb-10">
         <StatsCard
           title="Tracked Users"
-          value="15"
+          value={totalUsers}
           icon={<FaUsers />}
         />
 
         <StatsCard
           title="Total Solved"
-          value="34K+"
+          value={totalSolved.toLocaleString()}
           icon={<FaCode />}
         />
 
         <StatsCard
           title="Upcoming Contests"
-          value="3"
+          value="0"
           icon={<FaTrophy />}
         />
 
         <StatsCard
           title="Average Rating"
-          value="1842"
+          value={averageRating}
           icon={<FaChartLine />}
         />
       </div>
+
+      {/* Users */}
 
       <div>
         <h2 className="text-3xl font-bold mb-8">
           Tracked Users
         </h2>
 
-        {/* ONE CARD PER ROW */}
-
         <div className="space-y-8">
           {users.map((user) => (
             <UserCard
-              key={user.handle}
-              user={user}
+              key={user._id}
+              user={{
+                ...user,
+
+                cfId: user._id,
+
+                contests:
+                  user.contestCount || 0,
+
+                solved30:
+                  user.solvedLast30Days || 0,
+
+                lastOnline:
+                  user.lastOnlineTime || "N/A",
+
+                lastFiveSolved:
+                  user.recentSolved || [],
+              }}
             />
           ))}
         </div>

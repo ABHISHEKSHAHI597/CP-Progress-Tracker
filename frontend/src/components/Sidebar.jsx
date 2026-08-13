@@ -40,7 +40,9 @@ function Sidebar() {
   ];
 
   return (
-    <aside className="w-72 border-r border-slate-800 bg-slate-900/50 backdrop-blur-xl min-h-screen">
+    <aside
+      className=" fixed left-0 top-0 h-screen w-72 border-r border-slate-800 bg-slate-900/95 backdrop-blur-xl z-50"
+    >
       <div className="p-6">
         <h1 className="text-4xl font-bold text-blue-400">
           CP Tracker
@@ -57,11 +59,10 @@ function Sidebar() {
             key={link.path}
             to={link.path}
             className={`flex items-center gap-4 px-5 py-4 rounded-2xl mb-3 text-xl transition-all duration-300
-            ${
-              location.pathname === link.path
+            ${location.pathname === link.path
                 ? "bg-blue-600 text-white shadow-lg"
                 : "hover:bg-slate-800 text-slate-300"
-            }`}
+              }`}
           >
             <span className="text-2xl">{link.icon}</span>
             <span>{link.name}</span>

@@ -20,7 +20,7 @@ function App() {
     <BrowserRouter>
       <Routes>
 
-        {/* Public */}
+        {/* Pages with Sidebar */}
 
         <Route element={<MainLayout />}>
 
@@ -53,7 +53,7 @@ function App() {
           element={<Login />}
         />
 
-        {/* Protected Admin */}
+        {/* Admin WITHOUT Sidebar */}
 
         <Route
           path="/admin"

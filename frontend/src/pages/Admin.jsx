@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import API from "../services/api";
+import BackToTop from "../components/BackToTop";
 
 function Admin() {
   const navigate = useNavigate();
@@ -296,7 +297,9 @@ function Admin() {
 
       </div>
 
+      <BackToTop />
     </div>
+
   );
 }
 

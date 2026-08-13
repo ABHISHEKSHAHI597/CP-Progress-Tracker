@@ -7,6 +7,7 @@ import {
   FaChartLine,
   FaSignOutAlt,
   FaExternalLinkAlt,
+  FaHome,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import API from "../services/api";
@@ -34,7 +35,7 @@ function Admin() {
   const logout = () => {
     sessionStorage.removeItem("token");
 
-    toast.success("Logged out successfully");
+    toast.success("Directing to Home");
 
     setTimeout(() => {
       navigate("/");
@@ -109,13 +110,23 @@ function Admin() {
           </p>
         </div>
 
-        <button
-          onClick={logout}
-          className="flex items-center gap-2 px-4 py-2.5 text-sm rounded-xl bg-red-600 hover:bg-red-700 transition-all duration-300 shadow-lg shadow-red-600/20"
-        >
-          <FaSignOutAlt />
-          Logout
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all duration-300"
+          >
+            <FaHome />
+            Home
+          </button>
+
+          {/* <button
+            onClick={logout}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm rounded-xl bg-red-600 hover:bg-red-700 transition-all duration-300 shadow-lg shadow-red-600/20"
+          >
+            <FaSignOutAlt />
+            Logout
+          </button> */}
+        </div>
 
       </div>
 

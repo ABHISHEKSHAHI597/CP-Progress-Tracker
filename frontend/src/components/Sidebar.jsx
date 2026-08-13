@@ -2,9 +2,10 @@ import { Link, useLocation } from "react-router-dom";
 
 import {
   FaHome,
-  FaCalendarAlt,
   FaTrophy,
+  FaCalendarAlt,
   FaUserShield,
+  FaChartBar,
 } from "react-icons/fa";
 
 function Sidebar() {
@@ -15,6 +16,11 @@ function Sidebar() {
       name: "Home",
       path: "/",
       icon: <FaHome />,
+    },
+    {
+      name: "Leaderboard",
+      path: "/leaderboard",
+      icon: <FaChartBar />,
     },
     {
       name: "Contest Tracker",
@@ -34,13 +40,13 @@ function Sidebar() {
   ];
 
   return (
-    <aside className="w-72 border-r border-slate-800 bg-slate-900/50 backdrop-blur-xl">
+    <aside className="w-72 border-r border-slate-800 bg-slate-900/50 backdrop-blur-xl min-h-screen">
       <div className="p-6">
-        <h1 className="text-2xl font-bold text-blue-400">
+        <h1 className="text-4xl font-bold text-blue-400">
           CP Tracker
         </h1>
 
-        <p className="text-slate-400 text-sm mt-1">
+        <p className="text-slate-400 text-sm mt-2">
           Track Codeforces Progress
         </p>
       </div>
@@ -50,15 +56,15 @@ function Sidebar() {
           <Link
             key={link.path}
             to={link.path}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all duration-300
+            className={`flex items-center gap-4 px-5 py-4 rounded-2xl mb-3 text-xl transition-all duration-300
             ${
               location.pathname === link.path
-                ? "bg-blue-600 text-white"
+                ? "bg-blue-600 text-white shadow-lg"
                 : "hover:bg-slate-800 text-slate-300"
             }`}
           >
-            {link.icon}
-            {link.name}
+            <span className="text-2xl">{link.icon}</span>
+            <span>{link.name}</span>
           </Link>
         ))}
       </nav>

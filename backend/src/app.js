@@ -3,6 +3,7 @@ import cors from "cors";
 
 import userRoutes from "./routes/user.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import contestRoutes from "./routes/contest.routes.js";
 
 const app = express();
 
@@ -18,6 +19,11 @@ app.use(
 app.use(
   "/api/admin",
   adminRoutes
+);
+
+app.use(
+  "/api/contests",
+  contestRoutes
 );
 
 export default app;

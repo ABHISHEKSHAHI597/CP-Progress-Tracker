@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import ContestTracker from "./pages/ContestTracker";
 import ContestCalendar from "./pages/ContestCalendar";
+import Leaderboard from "./pages/Leaderboard";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -26,6 +27,11 @@ function App() {
           <Route
             path="/"
             element={<Home />}
+          />
+
+          <Route
+            path="/leaderboard"
+            element={<Leaderboard />}
           />
 
           <Route

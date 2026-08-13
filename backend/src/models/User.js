@@ -49,6 +49,34 @@ const userSchema = new mongoose.Schema(
         index: String,
       },
     ],
+
+    contestHistory: [
+      {
+        contestId: Number,
+        contestName: String,
+        rank: Number,
+        oldRating: Number,
+        newRating: Number,
+        ratingChange: Number,
+        contestTime: Date,
+      },
+    ],
+
+    contestsLast30Days: {
+      type: Number,
+      default: 0,
+    },
+
+    avgProblemRating30Days: {
+      type: Number,
+      default: 0,
+    },
+
+    medianProblemRating30Days: {
+      type: Number,
+      default: 0,
+    },
+    
   },
   {
     timestamps: true,

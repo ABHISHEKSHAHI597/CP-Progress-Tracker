@@ -11,8 +11,30 @@ export const loginAdmin = async (
     const { username, password } =
       req.body;
 
+    // Input validation
+    if (
+      typeof username !== "string" ||
+      typeof password !== "string"
+    ) {
+      return res.status(400).json({
+        message: "Invalid input",
+      });
+    }
+
+    if (
+      username.trim() === "" ||
+      password.trim() === ""
+    ) {
+      return res.status(400).json({
+        message:
+          "Username and password are required",
+      });
+    }
+
     const admin =
-      await Admin.findOne({ username });
+      await Admin.findOne({
+        username: username.trim(),
+      });
 
     if (!admin) {
       return res.status(401).json({
@@ -38,16 +60,22 @@ export const loginAdmin = async (
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: "7d",
+        expiresIn: "1h",
       }
     );
 
-    res.json({
+    return res.status(200).json({
       token,
     });
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
+    console.error(
+      "Admin login error:",
+      error
+    );
+
+    return res.status(500).json({
+      message:
+        "Internal server error",
     });
   }
 };

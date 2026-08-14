@@ -58,10 +58,6 @@ const refreshAllUsers = async () => {
             ...stats,
           }
         );
-
-        console.log(
-          `${user.handle} updated`
-        );
       } catch (err) {
         console.log(
           `Failed for ${user.handle}`

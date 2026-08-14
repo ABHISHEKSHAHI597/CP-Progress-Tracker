@@ -127,30 +127,30 @@ function Leaderboard() {
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-slate-800">
-        <table className="w-full">
+        <table className="w-full border-separate border-spacing-0">
           <thead>
             <tr className="bg-slate-800">
-              <th className="p-4">
+              <th className="p-4 sticky top-0 bg-slate-800 z-10">
                 #
               </th>
 
-              <th className="p-4 text-left">
+              <th className="p-4 text-left sticky top-0 bg-slate-800 z-10">
                 User
               </th>
 
-              <th className="p-4">
+              <th className="p-4 sticky top-0 bg-slate-800 z-10">
                 Questions
               </th>
 
-              <th className="p-4">
+              <th className="p-4 sticky top-0 bg-slate-800 z-10">
                 Contests
               </th>
 
-              <th className="p-4">
+              <th className="p-4 sticky top-0 bg-slate-800 z-10">
                 Avg Rating
               </th>
 
-              <th className="p-4">
+              <th className="p-4 sticky top-0 bg-slate-800 z-10">
                 Median Rating
               </th>
             </tr>

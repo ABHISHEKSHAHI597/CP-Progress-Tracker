@@ -237,7 +237,7 @@ function Admin() {
 
         <div className="overflow-x-auto">
 
-          <table className="w-full min-w-[560px]">
+          <table className="w-full min-w-140">
 
             <thead>
               <tr className="text-slate-400 text-sm border-b border-slate-800">

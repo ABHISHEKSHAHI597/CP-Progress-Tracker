@@ -38,7 +38,8 @@ function UserCard({ user }) {
       border
       border-slate-800
       rounded-2xl
-      p-5
+      p-4
+      sm:p-5
       shadow-lg
       w-full
       mx-auto
@@ -47,18 +48,18 @@ function UserCard({ user }) {
       {/* HEADER */}
 
       <div className="flex justify-between items-start flex-wrap gap-4">
-        <div className="flex gap-3">
-          <div className="w-12 h-12 rounded-full bg-linear-to-br from-purple-600 to-blue-500 flex items-center justify-center text-xl font-bold shrink-0">
+        <div className="flex gap-3 min-w-0">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-linear-to-br from-purple-600 to-blue-500 flex items-center justify-center text-lg sm:text-xl font-bold shrink-0">
             {user.handle[0].toUpperCase()}
           </div>
 
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl font-bold">
+              <h2 className="text-lg sm:text-xl font-bold truncate">
                 {user.handle}
               </h2>
 
-              <FaCheckCircle className="text-blue-400 text-sm" />
+              <FaCheckCircle className="text-blue-400 text-sm shrink-0" />
             </div>
 
             <p className="text-orange-400 text-sm mt-0.5 font-medium">
@@ -67,8 +68,8 @@ function UserCard({ user }) {
           </div>
         </div>
 
-        <div className="text-right">
-          <h2 className="text-3xl font-bold text-blue-400 leading-none">
+        <div className="text-right shrink-0">
+          <h2 className="text-2xl sm:text-3xl font-bold text-blue-400 leading-none">
             {user.rating}
           </h2>
 
@@ -82,7 +83,7 @@ function UserCard({ user }) {
 
       <div className="border-t border-slate-800 my-4"></div>
 
-      <div className="grid lg:grid-cols-4 md:grid-cols-3 grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
         <Stat
           title="Max Rating"
           value={user.maxRating}
@@ -140,9 +141,11 @@ function UserCard({ user }) {
               target="_blank"
               rel="noreferrer"
               className="
-        px-3
+        px-2.5
+        sm:px-3
         py-1.5
-        text-sm
+        text-xs
+        sm:text-sm
         rounded-full
         bg-slate-800
         hover:bg-slate-700
@@ -183,12 +186,12 @@ function UserCard({ user }) {
 
 function Stat({ title, value }) {
   return (
-    <div>
-      <p className="text-slate-500 text-xs uppercase tracking-wide">
+    <div className="min-w-0">
+      <p className="text-slate-500 text-xs uppercase tracking-wide truncate">
         {title}
       </p>
 
-      <p className="text-lg font-bold mt-1 wrap-break-word">
+      <p className="text-base sm:text-lg font-bold mt-1 wrap-break-word">
         {value}
       </p>
     </div>

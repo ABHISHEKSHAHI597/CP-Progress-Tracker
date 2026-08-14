@@ -30,22 +30,27 @@ function BackToTop() {
   return (
     <button
       onClick={scrollToTop}
+      aria-label="Back to top"
       className="
       fixed
-      bottom-6
-      right-6
+      bottom-5
+      right-5
+      sm:bottom-6
+      sm:right-6
       bg-blue-600
       hover:bg-blue-700
       text-white
-      p-4
+      p-3.5
+      sm:p-4
       rounded-full
       shadow-lg
       transition-all
       duration-300
-      z-50
+      z-40
       "
     >
-      <FaArrowUp />
+      <FaArrowUp size={14} className="sm:hidden" />
+      <FaArrowUp className="hidden sm:block" />
     </button>
   );
 }

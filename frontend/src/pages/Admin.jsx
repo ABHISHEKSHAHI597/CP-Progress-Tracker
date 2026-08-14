@@ -110,14 +110,14 @@ function Admin() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6 text-white">
+    <div className="max-w-6xl mx-auto p-3 sm:p-6 space-y-5 sm:space-y-6 text-white">
 
       {/* Header */}
 
       <div className="flex items-center justify-between flex-wrap gap-4">
 
         <div>
-          <h1 className="text-3xl font-extrabold bg-linear-to-r from-blue-400 via-cyan-400 to-purple-500 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-extrabold bg-linear-to-r from-blue-400 via-cyan-400 to-purple-500 bg-clip-text text-transparent">
             Admin Dashboard
           </h1>
 
@@ -148,16 +148,16 @@ function Admin() {
 
       {/* Stats */}
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-        <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-5">
+        <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-4 sm:p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-slate-400 text-sm">
                 Total Users
               </p>
 
-              <h2 className="text-3xl font-bold mt-1.5">
+              <h2 className="text-2xl sm:text-3xl font-bold mt-1.5">
                 {users.length}
               </h2>
             </div>
@@ -169,14 +169,14 @@ function Admin() {
           </div>
         </div>
 
-        <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-5">
+        <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-4 sm:p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-slate-400 text-sm">
                 Average Rating
               </p>
 
-              <h2 className="text-3xl font-bold mt-1.5">
+              <h2 className="text-2xl sm:text-3xl font-bold mt-1.5">
                 {avgRating}
               </h2>
             </div>
@@ -192,13 +192,13 @@ function Admin() {
 
       {/* Add User */}
 
-      <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-5">
+      <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-4 sm:p-5">
 
         <h2 className="text-lg font-bold mb-4">
           Add User
         </h2>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
 
           <input
             value={handle}
@@ -212,7 +212,7 @@ function Admin() {
           <button
             onClick={addUser}
             disabled={loading}
-            className="bg-linear-to-r from-blue-600 to-purple-600 px-6 rounded-xl text-sm font-semibold flex items-center gap-2 hover:scale-105 transition disabled:opacity-60 disabled:hover:scale-100"
+            className="bg-linear-to-r from-blue-600 to-purple-600 px-6 py-3 sm:py-0 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:scale-105 transition disabled:opacity-60 disabled:hover:scale-100"
           >
             <FaPlus />
 
@@ -229,7 +229,7 @@ function Admin() {
 
       <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden">
 
-        <div className="p-5 border-b border-slate-800">
+        <div className="p-4 sm:p-5 border-b border-slate-800">
           <h2 className="text-lg font-bold">
             Tracked Users ({users.length})
           </h2>
@@ -237,23 +237,23 @@ function Admin() {
 
         <div className="overflow-x-auto">
 
-          <table className="w-full">
+          <table className="w-full min-w-[560px]">
 
             <thead>
               <tr className="text-slate-400 text-sm border-b border-slate-800">
-                <th className="p-4 text-left">
+                <th className="p-3 sm:p-4 text-left">
                   Handle
                 </th>
 
-                <th className="p-4 text-left">
+                <th className="p-3 sm:p-4 text-left">
                   Rating
                 </th>
 
-                <th className="p-4 text-left">
+                <th className="p-3 sm:p-4 text-left">
                   Rank
                 </th>
 
-                <th className="p-4 text-center">
+                <th className="p-3 sm:p-4 text-center">
                   Actions
                 </th>
               </tr>
@@ -266,38 +266,39 @@ function Admin() {
                   key={user._id}
                   className="border-b border-slate-800 hover:bg-slate-800/40 transition"
                 >
-                  <td className="p-4 font-semibold">
+                  <td className="p-3 sm:p-4 font-semibold whitespace-nowrap">
                     {user.handle}
                   </td>
 
-                  <td className="p-4 text-blue-400 font-bold">
+                  <td className="p-3 sm:p-4 text-blue-400 font-bold">
                     {user.rating}
                   </td>
 
-                  <td className="p-4 capitalize text-slate-300">
+                  <td className="p-3 sm:p-4 capitalize text-slate-300">
                     {user.rank}
                   </td>
 
-                  <td className="p-4">
+                  <td className="p-3 sm:p-4">
                     <div className="flex items-center justify-center gap-2">
                       <a
                         href={`https://codeforces.com/profile/${user.handle}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-2 rounded-lg flex items-center gap-2 text-sm transition"
+                        className="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 sm:px-3 py-2 rounded-lg flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm transition whitespace-nowrap"
                       >
                         <FaExternalLinkAlt className="text-xs" />
-                        View Profile
+                        <span className="hidden sm:inline">View Profile</span>
+                        <span className="sm:hidden">View</span>
                       </a>
 
                       <button
                         onClick={() =>
                           deleteUser(user._id)
                         }
-                        className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg flex items-center gap-2 text-sm transition"
+                        className="bg-red-600 hover:bg-red-700 px-2.5 sm:px-3 py-2 rounded-lg flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm transition"
                       >
                         <FaTrash />
-                        Delete
+                        <span className="hidden sm:inline">Delete</span>
                       </button>
                     </div>
                   </td>

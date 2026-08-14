@@ -62,19 +62,19 @@ function Home() {
     <div>
       {/* Header */}
 
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
           CP Progress Tracker
         </h1>
 
-        <p className="text-slate-400 mt-2 text-base">
+        <p className="text-slate-400 mt-2 text-sm sm:text-base">
           Monitor Codeforces progress, ratings and contest performance.
         </p>
       </div>
 
       {/* Stats */}
 
-      <div className="grid xl:grid-cols-5 lg:grid-cols-3 md:grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <StatsCard
           title="Tracked Users"
           value={totalUsers}
@@ -116,7 +116,7 @@ function Home() {
       {/* Users */}
 
       <div>
-        <h2 className="text-2xl font-bold mb-5">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-5">
           Tracked Users
         </h2>
 

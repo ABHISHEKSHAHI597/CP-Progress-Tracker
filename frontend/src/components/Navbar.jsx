@@ -1,6 +1,6 @@
 function Navbar() {
   return (
-    <header className="h-20 border-b border-slate-800 flex items-center justify-between px-8">
+    <header className="hidden lg:flex h-20 border-b border-slate-800 items-center justify-between px-8">
       <div>
         <h2 className="text-xl font-semibold">
           Competitive Programming Dashboard

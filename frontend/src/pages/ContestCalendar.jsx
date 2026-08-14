@@ -5,6 +5,7 @@ import {
   FaClock,
   FaTrophy,
   FaCode,
+  FaRegCalendarPlus,
 } from "react-icons/fa";
 
 import { getCalendar } from "../services/calendarService";
@@ -13,9 +14,18 @@ function ContestCalendar() {
   const [upcoming, setUpcoming] = useState([]);
   const [previous, setPrevious] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(new Date());
 
   useEffect(() => {
     fetchCalendar();
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
   const fetchCalendar = async () => {
@@ -32,7 +42,7 @@ function ContestCalendar() {
   };
 
   const getCountdown = (startTime) => {
-    const diff = new Date(startTime) - new Date();
+    const diff = new Date(startTime) - now;
 
     if (diff <= 0) return "Starting Soon";
 
@@ -41,8 +51,45 @@ function ContestCalendar() {
       (diff % (1000 * 60 * 60 * 24)) /
         (1000 * 60 * 60)
     );
+    const mins = Math.floor(
+      (diff % (1000 * 60 * 60)) / (1000 * 60)
+    );
+    const secs = Math.floor(
+      (diff % (1000 * 60)) / 1000
+    );
 
-    return `${days}d ${hrs}h left`;
+    if (days > 0) {
+      return `${days}d ${hrs}h ${mins}m left`;
+    }
+
+    if (hrs > 0) {
+      return `${hrs}h ${mins}m ${secs}s left`;
+    }
+
+    return `${mins}m ${secs}s left`;
+  };
+
+  const toGCalDate = (date) =>
+    date
+      .toISOString()
+      .replace(/[-:]/g, "")
+      .split(".")[0] + "Z";
+
+  const getGoogleCalendarLink = (contest) => {
+    const start = new Date(contest.startTime);
+    const end = new Date(
+      start.getTime() + contest.duration * 60 * 60 * 1000
+    );
+
+    const params = new URLSearchParams({
+      action: "TEMPLATE",
+      text: contest.name,
+      dates: `${toGCalDate(start)}/${toGCalDate(end)}`,
+      details: `Codeforces contest: ${contest.name}. More info: https://codeforces.com/contests`,
+      location: "https://codeforces.com/contests",
+    });
+
+    return `https://www.google.com/calendar/render?${params.toString()}`;
   };
 
   if (loading) {
@@ -109,19 +156,32 @@ function ContestCalendar() {
                       </span>
                     </div>
 
-                    <div className="mt-2.5 text-yellow-400 font-semibold text-sm">
+                    <div className="mt-2.5 text-yellow-400 font-semibold text-sm tabular-nums">
                       ⏳ {getCountdown(contest.startTime)}
                     </div>
                   </div>
 
-                  <a
-                    href="https://codeforces.com/contests"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-blue-600 hover:bg-blue-700 px-5 py-2.5 text-sm rounded-xl font-medium h-fit transition shrink-0"
-                  >
-                    Register
-                  </a>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <a
+                      href={getGoogleCalendarLink(contest)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2.5 text-sm rounded-xl font-medium h-fit transition flex items-center gap-2"
+                      title="Add to Google Calendar"
+                    >
+                      <FaRegCalendarPlus className="text-xs" />
+                      Add to Calendar
+                    </a>
+
+                    <a
+                      href="https://codeforces.com/contests"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-blue-600 hover:bg-blue-700 px-5 py-2.5 text-sm rounded-xl font-medium h-fit transition"
+                    >
+                      Register
+                    </a>
+                  </div>
                 </div>
               </div>
             ))

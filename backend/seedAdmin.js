@@ -12,12 +12,12 @@ await mongoose.connect(
 
 const hashedPassword =
   await bcrypt.hash(
-    "vidyans@b24",
+    "abhishek@b25",
     10
   );
 
 await Admin.create({
-  username: "vidyans",
+  username: "abhishek",
   password: hashedPassword,
 });
 

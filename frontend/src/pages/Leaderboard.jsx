@@ -35,8 +35,8 @@ function Leaderboard() {
 
   if (loading) {
     return (
-      <div className="text-white text-xl">
-        Loading...
+      <div className="flex justify-center items-center h-[70vh]">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }

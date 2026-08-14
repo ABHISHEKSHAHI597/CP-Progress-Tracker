@@ -36,7 +36,9 @@ function Admin() {
   const logout = () => {
     sessionStorage.removeItem("token");
 
-    toast.success("Directing to Home");
+    toast.success("Directing to Home", {
+      autoClose: 1000,
+    });
 
     setTimeout(() => {
       navigate("/");
@@ -64,7 +66,7 @@ function Admin() {
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-          "Failed to add user"
+        "Failed to add user"
       );
     } finally {
       setLoading(false);
@@ -86,12 +88,12 @@ function Admin() {
   const avgRating =
     users.length > 0
       ? Math.round(
-          users.reduce(
-            (sum, user) =>
-              sum + (user.rating || 0),
-            0
-          ) / users.length
-        )
+        users.reduce(
+          (sum, user) =>
+            sum + (user.rating || 0),
+          0
+        ) / users.length
+      )
       : 0;
 
   return (

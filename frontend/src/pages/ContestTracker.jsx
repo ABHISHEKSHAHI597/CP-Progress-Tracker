@@ -21,8 +21,10 @@ import {
   FaArrowDown,
   FaUserCircle,
 } from "react-icons/fa";
+import { UseDocumentTitle } from '../hooks/UseDocumentTitle';
 
 function ContestTracker() {
+  UseDocumentTitle('Contest Tracker');
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] =
     useState(null);

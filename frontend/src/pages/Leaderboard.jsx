@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
+import { UseDocumentTitle } from '../hooks/UseDocumentTitle';
 
 function Leaderboard() {
+  UseDocumentTitle('Leaderboard');
   const [users, setUsers] =
     useState([]);
 

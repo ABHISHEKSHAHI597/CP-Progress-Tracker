@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import API from "../services/api";
+import { UseDocumentTitle } from '../hooks/UseDocumentTitle';
 
 function Login() {
+  UseDocumentTitle('Admin Login');
   const navigate = useNavigate();
 
   const [username, setUsername] =

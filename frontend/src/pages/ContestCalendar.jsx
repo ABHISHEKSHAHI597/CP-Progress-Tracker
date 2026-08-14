@@ -9,8 +9,10 @@ import {
 } from "react-icons/fa";
 
 import { getCalendar } from "../services/calendarService";
+import { UseDocumentTitle } from '../hooks/UseDocumentTitle';
 
 function ContestCalendar() {
+  UseDocumentTitle('Contest Calendar');
   const [upcoming, setUpcoming] = useState([]);
   const [previous, setPrevious] = useState([]);
   const [loading, setLoading] = useState(true);

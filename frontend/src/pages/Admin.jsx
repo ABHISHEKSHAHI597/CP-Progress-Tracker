@@ -12,8 +12,10 @@ import {
 import { toast } from "react-toastify";
 import API from "../services/api";
 import BackToTop from "../components/BackToTop";
+import { UseDocumentTitle } from '../hooks/UseDocumentTitle';
 
 function Admin() {
+  UseDocumentTitle('Admin');
   const navigate = useNavigate();
 
   const [handle, setHandle] = useState("");

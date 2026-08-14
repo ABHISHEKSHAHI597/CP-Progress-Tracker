@@ -10,8 +10,10 @@ import {
   FaTrophy,
   FaChartLine,
 } from "react-icons/fa";
+import { UseDocumentTitle } from '../hooks/UseDocumentTitle';
 
 function Home() {
+  UseDocumentTitle('Home');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 

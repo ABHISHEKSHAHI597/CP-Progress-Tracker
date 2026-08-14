@@ -19,6 +19,7 @@ function Admin() {
   const [handle, setHandle] = useState("");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
   const fetchUsers = async () => {
     try {
@@ -26,6 +27,8 @@ function Admin() {
       setUsers(res.data);
     } catch (error) {
       console.log(error);
+    } finally {
+      setPageLoading(false);
     }
   };
 
@@ -95,6 +98,14 @@ function Admin() {
         ) / users.length
       )
       : 0;
+
+  if (pageLoading) {
+    return (
+      <div className="flex justify-center items-center h-[70vh]">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6 text-white">

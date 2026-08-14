@@ -4,6 +4,7 @@ import cors from "cors";
 import userRoutes from "./routes/user.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import contestRoutes from "./routes/contest.routes.js";
+import calendarRoutes from "./routes/calendar.routes.js";
 
 const app = express();
 
@@ -25,5 +26,7 @@ app.use(
   "/api/contests",
   contestRoutes
 );
+
+app.use("/api/calendar", calendarRoutes);
 
 export default app;

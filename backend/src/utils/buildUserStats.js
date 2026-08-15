@@ -19,8 +19,12 @@ export const buildUserStats =
 
     const accepted = [];
 
-    const ratings30Days = [];
+    const ratingsSinceCutoff = [];
 
+    // Rolling 30-day window, but never goes earlier than Aug 1.
+    // e.g. right now (before 30 days have passed since Aug 1) the
+    // window is Aug 1 -> today. Once 30+ days have passed since
+    // Aug 1, this naturally becomes a true rolling 30-day window.
     const thirtyDaysAgo =
       Date.now() -
       30 *
@@ -28,6 +32,13 @@ export const buildUserStats =
         60 *
         60 *
         1000;
+
+    const hardStart = Date.UTC(2025, 7, 1); // Aug 1, 2025 (month is 0-indexed)
+
+    const cutoff = Math.max(
+      thirtyDaysAgo,
+      hardStart
+    );
 
     for (const submission of submissions) {
       if (
@@ -48,14 +59,14 @@ export const buildUserStats =
 
       if (
         submissionTime >
-        thirtyDaysAgo
+        cutoff
       ) {
         recentSet.add(key);
 
         if (
           submission.problem.rating
         ) {
-          ratings30Days.push(
+          ratingsSinceCutoff.push(
             submission.problem.rating
           );
         }
@@ -88,45 +99,45 @@ export const buildUserStats =
             submission.problem.index,
         }));
 
-    const contests30Days =
+    const contestsSinceCutoff =
       contests.filter(
         (contest) =>
           contest.ratingUpdateTimeSeconds *
             1000 >
-          thirtyDaysAgo
+          cutoff
       );
 
     const avgRating =
-      ratings30Days.length > 0
+      ratingsSinceCutoff.length > 0
         ? Number(
             (
-              ratings30Days.reduce(
+              ratingsSinceCutoff.reduce(
                 (a, b) => a + b,
                 0
               ) /
-              ratings30Days.length
+              ratingsSinceCutoff.length
             ).toFixed(1)
           )
         : 0;
 
     let medianRating = 0;
 
-    if (ratings30Days.length) {
-      ratings30Days.sort(
+    if (ratingsSinceCutoff.length) {
+      ratingsSinceCutoff.sort(
         (a, b) => a - b
       );
 
       const mid =
         Math.floor(
-          ratings30Days.length / 2
+          ratingsSinceCutoff.length / 2
         );
 
       medianRating =
-        ratings30Days.length % 2
-          ? ratings30Days[mid]
+        ratingsSinceCutoff.length % 2
+          ? ratingsSinceCutoff[mid]
           : (
-              ratings30Days[mid] +
-              ratings30Days[mid - 1]
+              ratingsSinceCutoff[mid] +
+              ratingsSinceCutoff[mid - 1]
             ) / 2;
     }
 
@@ -173,7 +184,7 @@ export const buildUserStats =
         ),
 
       contestsLast30Days:
-        contests30Days.length,
+        contestsSinceCutoff.length,
 
       avgProblemRating30Days:
         avgRating,

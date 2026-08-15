@@ -79,8 +79,7 @@ function Leaderboard() {
         </h1>
 
         <p className="text-slate-400 text-xl">
-          Last 30 Days
-          Performance
+          Last 30 Days Performance (resets from Aug 1)
         </p>
       </div>
 

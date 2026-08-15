@@ -1,23 +1,21 @@
-import axios from "axios";
+import { getNextWeeklyOccurrences } from "../utils/scheduleHelper.js";
 
+// AtCoder Beginner Contest: every Saturday, 5:30 PM IST (12:00 UTC), ~100 min
 export const getUpcomingAtCoderContests = async () => {
-  const { data } = await axios.get(
-    "https://kenkoooo.com/atcoder/resources/contests.json"
-  );
+  const occurrences = getNextWeeklyOccurrences({
+    dayOfWeek: 6, // Saturday
+    hourUTC: 12,
+    minuteUTC: 0,
+    count: 1,
+  });
 
-  const now = Date.now();
-
-  return data
-    .filter((contest) => contest.start_epoch_second * 1000 > now)
-    .sort((a, b) => a.start_epoch_second - b.start_epoch_second)
-    .slice(0, 10)
-    .map((contest) => ({
-      id: `ac-${contest.id}`,
-      name: contest.title,
-      platform: "AtCoder",
-      type: "Contest",
-      duration: Math.round((contest.duration_second / 3600) * 10) / 10,
-      startTime: contest.start_epoch_second * 1000,
-      link: `https://atcoder.jp/contests/${contest.id}`,
-    }));
+  return occurrences.map((date) => ({
+    id: `ac-${date.getTime()}`,
+    name: "AtCoder Beginner Contest",
+    platform: "AtCoder",
+    type: "Beginner",
+    duration: 1.7, // ~100 minutes
+    startTime: date.getTime(),
+    link: "https://atcoder.jp/contests/",
+  }));
 };

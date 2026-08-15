@@ -1,44 +1,39 @@
-import axios from "axios";
+import {
+  getNextWeeklyOccurrences,
+  getNextBiweeklyOccurrences,
+} from "../utils/scheduleHelper.js";
 
-const LEETCODE_GRAPHQL = "https://leetcode.com/graphql";
-
+// LeetCode Weekly Contest: every Sunday, 8:00 AM IST (02:30 UTC), 1.5 hrs
+// LeetCode Biweekly Contest: alternate Saturdays, 8:00 PM IST (14:30 UTC), 1.5 hrs
 export const getUpcomingLeetCodeContests = async () => {
-  const query = `
-    query {
-      allContests {
-        title
-        titleSlug
-        startTime
-        duration
-      }
-    }
-  `;
+  const weekly = getNextWeeklyOccurrences({
+    dayOfWeek: 0, // Sunday
+    hourUTC: 2,
+    minuteUTC: 30,
+    count: 1,
+  }).map((date) => ({
+    id: `lc-weekly-${date.getTime()}`,
+    name: "LeetCode Weekly Contest",
+    platform: "LeetCode",
+    type: "Weekly",
+    duration: 1.5,
+    startTime: date.getTime(),
+    link: "https://leetcode.com/contest/",
+  }));
 
-  const { data } = await axios.post(
-    LEETCODE_GRAPHQL,
-    { query },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Referer: "https://leetcode.com",
-      },
-    }
-  );
+  const biweekly = getNextBiweeklyOccurrences({
+    // Anchor: a known Biweekly Contest slot. Adjust by ±7 days if parity is off.
+    anchorDateUTC: "2025-08-16T14:30:00Z",
+    count: 1,
+  }).map((date) => ({
+    id: `lc-biweekly-${date.getTime()}`,
+    name: "LeetCode Biweekly Contest",
+    platform: "LeetCode",
+    type: "Biweekly",
+    duration: 1.5,
+    startTime: date.getTime(),
+    link: "https://leetcode.com/contest/",
+  }));
 
-  const now = Date.now();
-  const contests = data?.data?.allContests || [];
-
-  return contests
-    .filter((contest) => contest.startTime * 1000 > now)
-    .map((contest) => ({
-      id: `lc-${contest.titleSlug}`,
-      name: contest.title,
-      platform: "LeetCode",
-      type: contest.titleSlug.includes("biweekly")
-        ? "Biweekly"
-        : "Weekly",
-      duration: Math.round((contest.duration / 3600) * 10) / 10,
-      startTime: contest.startTime * 1000,
-      link: `https://leetcode.com/contest/${contest.titleSlug}`,
-    }));
+  return [...weekly, ...biweekly];
 };

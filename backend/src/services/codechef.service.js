@@ -1,19 +1,21 @@
-import axios from "axios";
+import { getNextWeeklyOccurrences } from "../utils/scheduleHelper.js";
 
+// CodeChef Starters: every Wednesday, 8:00 PM IST (14:30 UTC), ~3 hrs
 export const getUpcomingCodeChefContests = async () => {
-  const { data } = await axios.get(
-    "https://www.codechef.com/api/list/contests/all"
-  );
+  const occurrences = getNextWeeklyOccurrences({
+    dayOfWeek: 3, // Wednesday
+    hourUTC: 14,
+    minuteUTC: 30,
+    count: 1,
+  });
 
-  const contests = data?.future_contests || [];
-
-  return contests.map((contest) => ({
-    id: `cc-${contest.contest_code}`,
-    name: contest.contest_name,
+  return occurrences.map((date) => ({
+    id: `cc-${date.getTime()}`,
+    name: "CodeChef Starters",
     platform: "CodeChef",
-    type: "Contest",
-    duration: Math.round((Number(contest.contest_duration) / 60) * 10) / 10, // minutes -> hours
-    startTime: new Date(contest.contest_start_date_iso).getTime(),
-    link: `https://www.codechef.com/${contest.contest_code}`,
+    type: "Starters",
+    duration: 3,
+    startTime: date.getTime(),
+    link: "https://www.codechef.com/contests",
   }));
 };

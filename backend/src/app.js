@@ -5,22 +5,20 @@ import adminRoutes from "./routes/admin.routes.js";
 import contestRoutes from "./routes/contest.routes.js";
 import calendarRoutes from "./routes/calendar.routes.js";
 import helmet from "helmet";
-import mongoSanitize from "express-mongo-sanitize";
 
 const app = express();
 
 app.use(
   cors(
-    {
-    origin: "https://cp-progress-tracker-red.vercel.app",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  }
+  //   {
+  //   origin: "https://cp-progress-tracker-red.vercel.app",
+  //   methods: ["GET", "POST", "PUT", "DELETE"],
+  //   credentials: true,
+  // }
 )
 );
 
 app.use(helmet());
-app.use(mongoSanitize());
 
 app.use(express.json());
 

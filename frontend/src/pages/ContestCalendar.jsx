@@ -87,8 +87,8 @@ function ContestCalendar() {
       action: "TEMPLATE",
       text: contest.name,
       dates: `${toGCalDate(start)}/${toGCalDate(end)}`,
-      details: `Codeforces contest: ${contest.name}. More info: https://codeforces.com/contests`,
-      location: "https://codeforces.com/contests",
+      details: `${contest.platform} contest: ${contest.name}. More info: ${contest.link}`,
+      location: contest.link,
     });
 
     return `https://www.google.com/calendar/render?${params.toString()}`;
@@ -154,7 +154,7 @@ function ContestCalendar() {
                       </span>
 
                       <span className="bg-blue-600/20 text-blue-400 px-2.5 py-0.5 rounded-full text-xs">
-                        {contest.type}
+                        {contest.platform}
                       </span>
                     </div>
 
@@ -176,7 +176,7 @@ function ContestCalendar() {
                     </a>
 
                     <a
-                      href="https://codeforces.com/contests"
+                      href={contest.link}
                       target="_blank"
                       rel="noreferrer"
                       className="bg-blue-600 hover:bg-blue-700 px-5 py-2.5 text-sm rounded-xl font-medium h-fit transition"

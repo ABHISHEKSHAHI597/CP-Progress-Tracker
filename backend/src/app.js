@@ -10,11 +10,11 @@ const app = express();
 
 app.use(
   cors(
-  //   {
-  //   origin: "https://cp-progress-tracker-red.vercel.app",
-  //   methods: ["GET", "POST", "PUT", "DELETE"],
-  //   credentials: true,
-  // }
+    {
+    origin: process.env.FRONTEND_URL,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  }
 )
 );
 

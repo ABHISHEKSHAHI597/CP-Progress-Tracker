@@ -169,9 +169,14 @@ function Leaderboard() {
                   <td className="p-4">
                     <div>
                       <p className="font-semibold">
-                        {
-                          user.handle
-                        }
+                        <a
+                          href={`https://codeforces.com/profile/${user.handle}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline hover:text-blue-400"
+                        >
+                          {user.handle}
+                        </a>
                       </p>
 
                       <p className="text-sm text-slate-400">

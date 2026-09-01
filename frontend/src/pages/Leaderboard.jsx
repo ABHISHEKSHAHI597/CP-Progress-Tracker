@@ -25,10 +25,7 @@ const getScore = (user) => {
   return Number.isFinite(score) ? score : 0;
 };
 
-const formatScore = (score) =>
-  score >= 100
-    ? Math.round(score).toLocaleString()
-    : score.toFixed(1);
+const formatScore = (score) => score.toFixed(2);
 
 const rankColor = (index) => {
   if (index === 0) return "text-yellow-400";

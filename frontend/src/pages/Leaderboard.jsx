@@ -27,6 +27,9 @@ const getScore = (user) => {
 
 const formatScore = (score) => score.toFixed(2);
 
+const formatRating = (rating) =>
+  rating || rating === 0 ? Math.round(rating) : "—";
+
 const rankColor = (index) => {
   if (index === 0) return "text-yellow-400";
   if (index === 1) return "text-slate-300";
@@ -116,8 +119,8 @@ function Leaderboard() {
         </div>
       </div>
 
-      {/* Table — medium screens and up */}
-      <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-800">
+      {/* Table — large screens */}
+      <div className="hidden lg:block overflow-x-auto rounded-2xl border border-slate-800">
         <table className="w-full border-separate border-spacing-0">
           <thead>
             <tr className="bg-slate-800">
@@ -128,6 +131,10 @@ function Leaderboard() {
               <th className="p-4 sticky top-0 bg-slate-800 z-10">Score</th>
               <th className="p-4 sticky top-0 bg-slate-800 z-10">Questions</th>
               <th className="p-4 sticky top-0 bg-slate-800 z-10">Contests</th>
+              <th className="p-4 sticky top-0 bg-slate-800 z-10">Avg Rating</th>
+              <th className="p-4 sticky top-0 bg-slate-800 z-10">
+                Median Rating
+              </th>
             </tr>
           </thead>
 
@@ -137,9 +144,7 @@ function Leaderboard() {
                 key={user._id}
                 className="border-t border-slate-800 hover:bg-slate-900"
               >
-                <td
-                  className={`p-4 text-center font-bold ${rankColor(index)}`}
-                >
+                <td className={`p-4 text-center font-bold ${rankColor(index)}`}>
                   {index + 1}
                 </td>
 
@@ -165,14 +170,22 @@ function Leaderboard() {
                 <td className="p-4 text-center">{user.solvedLast30Days}</td>
 
                 <td className="p-4 text-center">{user.contestsLast30Days}</td>
+
+                <td className="p-4 text-center">
+                  {formatRating(user.avgProblemRating30Days)}
+                </td>
+
+                <td className="p-4 text-center">
+                  {formatRating(user.medianProblemRating30Days)}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* Cards — small screens */}
-      <div className="md:hidden space-y-3">
+      {/* Cards — phones and tablets */}
+      <div className="lg:hidden space-y-3">
         {users.map((user, index) => (
           <div
             key={user._id}
@@ -180,7 +193,7 @@ function Leaderboard() {
           >
             <div className="flex items-center gap-3">
               <span
-                className={`text-xl font-bold w-7 shrink-0 ${rankColor(index)}`}
+                className={`text-xl font-bold w-6 shrink-0 ${rankColor(index)}`}
               >
                 {index + 1}
               </span>
@@ -206,20 +219,34 @@ function Leaderboard() {
               </div>
             </div>
 
-            <div className="flex gap-6 mt-3 pt-3 border-t border-slate-700/60 text-sm">
-              <p className="text-slate-400">
-                Questions{" "}
-                <span className="text-white font-semibold">
-                  {user.solvedLast30Days}
-                </span>
-              </p>
+            <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-slate-700/60 text-center">
+              <div>
+                <p className="text-base font-semibold">
+                  {user.solvedLast30Days ?? 0}
+                </p>
+                <p className="text-[11px] text-slate-400">Questions</p>
+              </div>
 
-              <p className="text-slate-400">
-                Contests{" "}
-                <span className="text-white font-semibold">
-                  {user.contestsLast30Days}
-                </span>
-              </p>
+              <div>
+                <p className="text-base font-semibold">
+                  {user.contestsLast30Days ?? 0}
+                </p>
+                <p className="text-[11px] text-slate-400">Contests</p>
+              </div>
+
+              <div>
+                <p className="text-base font-semibold">
+                  {formatRating(user.avgProblemRating30Days)}
+                </p>
+                <p className="text-[11px] text-slate-400">Avg</p>
+              </div>
+
+              <div>
+                <p className="text-base font-semibold">
+                  {formatRating(user.medianProblemRating30Days)}
+                </p>
+                <p className="text-[11px] text-slate-400">Median</p>
+              </div>
             </div>
           </div>
         ))}

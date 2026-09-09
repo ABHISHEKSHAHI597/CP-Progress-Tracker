@@ -6,6 +6,7 @@ import { UseDocumentTitle } from "../hooks/UseDocumentTitle";
 import PageHeader from "../components/PageHeader";
 import FigureStrip from "../components/FigureStrip";
 import Handle from "../components/Handle";
+import Modal from "../components/Modal";
 import Loader from "../components/Loader";
 import EmptyState from "../components/EmptyState";
 
@@ -33,55 +34,54 @@ function HowItWorks() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="text-[13px]">
+    <>
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        aria-expanded={open}
-        className="text-mute hover:text-paper transition-colors inline-flex items-center gap-1.5"
+        onClick={() => setOpen(true)}
+        className="text-[13px] text-mute hover:text-paper transition-colors
+                   inline-flex items-center gap-1.5"
       >
         How the score works
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 14 14"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        >
-          <path d="M3.5 5.5L7 9l3.5-3.5" strokeLinecap="round" strokeLinejoin="round" />
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <circle cx="7" cy="7" r="5.6" />
+          <path d="M7 6.2v3.4M7 4.4v.1" strokeLinecap="round" />
         </svg>
       </button>
 
-      {open && (
-        <div className="mt-3 border border-line rounded-lg bg-ink-2 p-4 max-w-[62ch] space-y-3">
-          <p className="font-mono text-[12.5px] text-paper leading-relaxed">
-            score = Q · (A/1000)² · 2^((A − U)/400) · (1 + 0.05·C)
+      <Modal open={open} onClose={() => setOpen(false)} title="How the score works">
+        <div className="space-y-4 text-[13.5px]">
+          <p className="text-mute leading-relaxed">
+            Standings rank the last 30 days of work, not your rating.
           </p>
 
-          <ul className="text-mute space-y-1.5">
-            <li>
-              <span className="font-mono text-paper">Q</span> — problems solved in the last 30 days
-            </li>
-            <li>
-              <span className="font-mono text-paper">A</span> — their average difficulty
-            </li>
-            <li>
-              <span className="font-mono text-paper">U</span> — your current rating
-            </li>
-            <li>
-              <span className="font-mono text-paper">C</span> — contests entered in the last 30 days
-            </li>
-          </ul>
+          {/* Split across lines so it never needs sideways scrolling on a phone. */}
+          <div className="rounded-lg border border-line bg-ink px-4 py-3.5">
+            <pre className="font-mono text-[12.5px] sm:text-[13px] text-paper leading-relaxed m-0">
+              {"score = Q · (A/1000)²\n        · 2^((A − U)/400)\n        · (1 + 0.05·C)"}
+            </pre>
+          </div>
 
-          <p className="text-mute">
+          <dl className="space-y-2.5">
+            {[
+              ["Q", "problems solved in the last 30 days"],
+              ["A", "their average difficulty"],
+              ["U", "your current rating"],
+              ["C", "contests entered in the last 30 days"],
+            ].map(([symbol, meaning]) => (
+              <div key={symbol} className="flex gap-3">
+                <dt className="font-mono text-paper w-5 shrink-0">{symbol}</dt>
+                <dd className="text-mute">{meaning}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <p className="text-mute leading-relaxed border-t border-line-soft pt-4">
             Solving above your own rating counts exponentially more, so volume alone will not
             carry anyone to the top.
           </p>
         </div>
-      )}
-    </div>
+      </Modal>
+    </>
   );
 }
 

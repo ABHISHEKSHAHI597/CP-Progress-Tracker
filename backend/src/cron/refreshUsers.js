@@ -1,84 +1,79 @@
 import cron from "node-cron";
 
-import User from "../models/User.js";
-
 import {
-  getUserInfo,
-} from "../services/codeforces.service.js";
+  repairStaleUsers,
+  syncProfiles,
+  syncRatingHistories,
+  syncSubmissions,
+} from "../services/sync.service.js";
 
-import {
-  buildUserStats,
-} from "../utils/buildUserStats.js";
+/**
+ * Three jobs at three cadences, because the data moves at three speeds.
+ *
+ *   profiles     one request for the whole roster, so it can run often
+ *   submissions  one small page per person, only what is new since last time
+ *   repair       a slow full rebuild of the oldest handles, to catch rejudges
+ *
+ * Contest history is not on a timer at all. It is fetched only for handles
+ * whose rating moved, which the profile tick reports.
+ */
+const PROFILE_SCHEDULE = "*/5 * * * *";
+const SUBMISSION_SCHEDULE = "*/30 * * * *";
+const REPAIR_SCHEDULE = "23 * * * *";
 
-const refreshAllUsers = async () => {
+const running = new Set();
+
+/** A slow run must never stack on top of itself. */
+async function once(name, job) {
+  if (running.has(name)) {
+    console.log(`Skipped ${name}: previous run still going`);
+    return;
+  }
+
+  running.add(name);
+
+  const startedAt = Date.now();
+
   try {
-    console.log(
-      "Refreshing users..."
-    );
+    const summary = await job();
+    const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
 
-    const users = await User.find();
+    console.log(`${name} finished in ${seconds}s`, summary ?? "");
+  } catch (error) {
+    console.log(`${name} failed: ${error.message}`);
+  } finally {
+    running.delete(name);
+  }
+}
 
-    for (const user of users) {
-      try {
-        const cfUser =
-          await getUserInfo(
-            user.handle
-          );
+const refreshProfiles = () =>
+  once("profiles", async () => {
+    const { checked, ratingChanged, missing } = await syncProfiles();
 
-        const stats =
-          await buildUserStats(
-            user.handle
-          );
-
-        await User.findByIdAndUpdate(
-          user._id,
-          {
-            rank: cfUser.rank,
-            maxRank:
-              cfUser.maxRank,
-
-            rating:
-              cfUser.rating,
-
-            maxRating:
-              cfUser.maxRating,
-
-            contribution:
-              cfUser.contribution,
-
-            friendOfCount:
-              cfUser.friendOfCount,
-
-            lastOnlineTime:
-              new Date(
-                cfUser.lastOnlineTimeSeconds *
-                  1000
-              ),
-
-            ...stats,
-          }
-        );
-      } catch (err) {
-        console.log(
-          `Failed for ${user.handle}`
-        );
-      }
+    if (missing.length) {
+      console.log(`Handles no longer on Codeforces: ${missing.join(", ")}`);
     }
 
-    console.log(
-      "Refresh completed"
-    );
-  } catch (err) {
-    console.log(err);
-  }
+    const updated = ratingChanged.length
+      ? await syncRatingHistories(ratingChanged)
+      : 0;
+
+    return { checked, ratingHistories: updated };
+  });
+
+const refreshSubmissions = () => once("submissions", () => syncSubmissions());
+
+const repair = () => once("repair", async () => ({
+  repaired: await repairStaleUsers(),
+}));
+
+export const startCronJob = async () => {
+  // One request, so a restart costs almost nothing.
+  await refreshProfiles();
+
+  cron.schedule(PROFILE_SCHEDULE, refreshProfiles);
+  cron.schedule(SUBMISSION_SCHEDULE, refreshSubmissions);
+  cron.schedule(REPAIR_SCHEDULE, repair);
+
+  console.log("Refresh jobs scheduled");
 };
-
-export const startCronJob =
-  async () => {
-    await refreshAllUsers();
-
-    cron.schedule(
-      "*/5 * * * *",
-      refreshAllUsers
-    );
-  };

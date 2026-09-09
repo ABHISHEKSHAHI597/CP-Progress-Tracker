@@ -1,5 +1,7 @@
 import express from "express";
 import cors from "cors";
+
+import { ALLOWED_ORIGINS } from "./config/env.js";
 import userRoutes from "./routes/user.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import contestRoutes from "./routes/contest.routes.js";
@@ -9,13 +11,19 @@ import helmet from "helmet";
 const app = express();
 
 app.use(
-  cors(
-    {
-    origin: process.env.FRONTEND_URL,
+  cors({
+    // FRONTEND_URL can list several origins, so one build serves the local
+    // dev server and the deployed site without editing code.
+    origin(origin, callback) {
+      if (!origin || ALLOWED_ORIGINS.length === 0) return callback(null, true);
+
+      const allowed = ALLOWED_ORIGINS.includes(origin.replace(/\/$/, ""));
+
+      callback(allowed ? null : new Error(`Origin ${origin} is not allowed`), allowed);
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
-  }
-)
+  })
 );
 
 app.use(helmet());

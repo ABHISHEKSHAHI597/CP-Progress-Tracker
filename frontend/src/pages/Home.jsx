@@ -1,149 +1,141 @@
 import { useEffect, useState } from "react";
+
 import API from "../services/api";
+import { UseDocumentTitle } from "../hooks/UseDocumentTitle";
 
-import StatsCard from "../components/StatsCard";
-import UserCard from "../components/UserCard";
+import PageHeader from "../components/PageHeader";
+import FigureStrip from "../components/FigureStrip";
+import RatingLadder from "../components/RatingLadder";
+import RosterRow from "../components/RosterRow";
+import Loader from "../components/Loader";
+import EmptyState from "../components/EmptyState";
+import { tierColor } from "../lib/rank";
 
-import {
-  FaUsers,
-  FaCode,
-  FaTrophy,
-  FaChartLine,
-} from "react-icons/fa";
-import { UseDocumentTitle } from '../hooks/UseDocumentTitle';
+const SORTS = [
+  { key: "rating", label: "Rating" },
+  { key: "solvedLast30Days", label: "Last 30 days" },
+  { key: "totalSolved", label: "Solved" },
+  { key: "contestCount", label: "Contests" },
+];
 
 function Home() {
-  UseDocumentTitle('Home');
+  UseDocumentTitle("Overview · CP Tracker");
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const fetchUsers = async () => {
-    try {
-      const res = await API.get("/users");
-
-      setUsers(res.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [failed, setFailed] = useState(false);
+  const [sort, setSort] = useState("rating");
 
   useEffect(() => {
-    fetchUsers();
+    let live = true;
+
+    API.get("/users")
+      .then((res) => live && setUsers(res.data))
+      .catch(() => live && setFailed(true))
+      .finally(() => live && setLoading(false));
+
+    return () => {
+      live = false;
+    };
   }, []);
 
-  const totalUsers = users.length;
+  if (loading) return <Loader label="Fetching the roster" />;
 
-  const totalSolved = users.reduce(
-    (sum, user) => sum + (user.totalSolved || 0),
-    0
-  );
-
-  const averageRating =
-    totalUsers > 0
-      ? Math.round(
-        users.reduce(
-          (sum, user) => sum + (user.rating || 0),
-          0
-        ) / totalUsers
-      )
-      : 0;
-
-  if (loading) {
+  if (failed) {
     return (
-      <div className="flex justify-center items-center h-[70vh]">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
+      <EmptyState
+        title="Could not reach the tracker service"
+        hint="The backend is not responding. Start it, then reload this page."
+      />
     );
   }
 
+  const rated = users.filter((user) => user.rating);
+
+  const totalSolved = users.reduce((sum, user) => sum + (user.totalSolved || 0), 0);
+  const solved30 = users.reduce((sum, user) => sum + (user.solvedLast30Days || 0), 0);
+
+  const averageRating = rated.length
+    ? Math.round(rated.reduce((sum, user) => sum + user.rating, 0) / rated.length)
+    : 0;
+
+  const peak = rated.length ? Math.max(...rated.map((user) => user.rating)) : 0;
+
+  const sorted = [...users].sort((a, b) => (b[sort] || 0) - (a[sort] || 0));
+
   return (
-    <div>
-      {/* Header */}
+    <div className="space-y-10">
+      <PageHeader
+        title="Overview"
+        lede="Where everyone in the group currently sits on the Codeforces ladder, and what they have solved lately."
+      />
 
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
-          CP Progress Tracker
-        </h1>
-
-        <p className="text-slate-400 mt-2 text-sm sm:text-base">
-          Monitor Codeforces progress, ratings and contest performance.
-        </p>
-      </div>
-
-      {/* Stats */}
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <StatsCard
-          title="Tracked Users"
-          value={totalUsers}
-          icon={<FaUsers />}
+      {users.length === 0 ? (
+        <EmptyState
+          title="No one is being tracked yet"
+          hint="Sign in as an admin and add a Codeforces handle to start collecting ratings and submissions."
         />
+      ) : (
+        <>
+          <RatingLadder users={users} />
 
-        <StatsCard
-          title="Total Solved"
-          value={totalSolved.toLocaleString()}
-          icon={<FaCode />}
-        />
+          <FigureStrip
+            items={[
+              { label: "Tracked", value: users.length },
+              { label: "Average rating", value: averageRating, tone: tierColor(averageRating) },
+              { label: "Highest rating", value: peak, tone: tierColor(peak) },
+              { label: "Solved in 30 days", value: solved30 },
+              { label: "Solved overall", value: totalSolved.toLocaleString() },
+            ]}
+          />
 
-        <StatsCard
-          title="Average Rating"
-          value={averageRating}
-          icon={<FaChartLine />}
-        />
+          <section>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3 mb-3">
+              <h2 className="text-[19px] font-semibold">
+                Roster
+                <span className="text-faint font-normal ml-2 text-[15px]">{users.length}</span>
+              </h2>
 
-        <StatsCard
-          title="Highest Rating"
-          value={
-            users.length
-              ? Math.max(...users.map(u => u.rating || 0))
-              : 0
-          }
-          icon={<FaTrophy />}
-        />
+              <div className="flex items-center gap-1 text-[13px]">
+                <span className="text-faint mr-1.5">Sort by</span>
 
-        <StatsCard
-          title="Total Contests"
-          value={users.reduce(
-            (sum, user) => sum + (user.contestCount || 0),
-            0
-          )}
-          icon={<FaTrophy />}
-        />
-      </div>
+                {SORTS.map((option) => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    onClick={() => setSort(option.key)}
+                    className={`px-2.5 py-1 rounded transition-colors ${
+                      sort === option.key
+                        ? "text-paper bg-ink-3"
+                        : "text-mute hover:text-paper"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-      {/* Users */}
+            <div className="border border-line rounded-lg overflow-hidden">
+              {sorted.map((user) => (
+                <RosterRow
+                  key={user._id}
+                  user={user}
+                  onRefreshed={(fresh) =>
+                    setUsers((current) =>
+                      current.map((entry) => (entry._id === fresh._id ? fresh : entry))
+                    )
+                  }
+                />
+              ))}
+            </div>
 
-      <div>
-        <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-5">
-          Tracked Users
-        </h2>
-
-        <div className="space-y-4">
-          {users.map((user) => (
-            <UserCard
-              key={user._id}
-              user={{
-                ...user,
-                cfId: user.cfId,
-
-                contests:
-                  user.contestCount || 0,
-
-                solved30:
-                  user.solvedLast30Days || 0,
-
-                lastOnline:
-                  user.lastOnlineTime || "N/A",
-
-                lastFiveSolved:
-                  user.recentSolved || [],
-              }}
-            />
-          ))}
-        </div>
-      </div>
+            <p className="text-faint text-[12.5px] mt-3">
+              Open a row for peak rank, activity and the problems they solved most recently.
+            </p>
+          </section>
+        </>
+      )}
     </div>
   );
 }

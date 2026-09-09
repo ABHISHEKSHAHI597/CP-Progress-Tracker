@@ -23,4 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
+# Environment files stay local. .env.example is committed as the template.
 .env
+.env.*
+!.env.example

@@ -1,321 +1,272 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  FaPlus,
-  FaTrash,
-  FaUsers,
-  FaChartLine,
-  FaSignOutAlt,
-  FaExternalLinkAlt,
-  FaHome,
-} from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+
 import API from "../services/api";
+import { UseDocumentTitle } from "../hooks/UseDocumentTitle";
+
+import PageHeader from "../components/PageHeader";
+import FigureStrip from "../components/FigureStrip";
+import Handle from "../components/Handle";
+import Loader from "../components/Loader";
+import EmptyState from "../components/EmptyState";
 import BackToTop from "../components/BackToTop";
-import { UseDocumentTitle } from '../hooks/UseDocumentTitle';
+
+import { formatRating, relativeTime, tierColor } from "../lib/rank";
 
 function Admin() {
-  UseDocumentTitle('Admin');
+  UseDocumentTitle("Admin · CP Tracker");
+
   const navigate = useNavigate();
 
-  const [handle, setHandle] = useState("");
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(true);
+  const [handle, setHandle] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [pending, setPending] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchUsers = async () => {
     try {
       const res = await API.get("/users");
       setUsers(res.data);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setPageLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const logout = () => {
-    sessionStorage.removeItem("token");
-
-    toast.success("Directing to Home", {
-      autoClose: 1000,
-    });
-
-    setTimeout(() => {
-      navigate("/");
-    }, 1000);
-  };
-
-  const addUser = async () => {
-    if (!handle.trim()) {
-      toast.error("Enter a handle");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      await API.post("/users", {
-        handle,
-      });
-
-      toast.success("User added");
-
-      setHandle("");
-
-      fetchUsers();
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-        "Failed to add user"
-      );
+    } catch {
+      toast.error("Could not load the roster");
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteUser = async (id) => {
-    try {
-      await API.delete(`/users/${id}`);
+  useEffect(() => {
+    let live = true;
 
-      toast.success("User deleted");
+    API.get("/users")
+      .then((res) => live && setUsers(res.data))
+      .catch(() => live && toast.error("Could not load the roster"))
+      .finally(() => live && setLoading(false));
+
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const signOut = () => {
+    sessionStorage.removeItem("token");
+    navigate("/");
+  };
+
+  const addUser = async (event) => {
+    event.preventDefault();
+
+    if (!handle.trim()) {
+      toast.error("Enter a Codeforces handle");
+      return;
+    }
+
+    try {
+      setAdding(true);
+
+      await API.post("/users", { handle: handle.trim() });
+
+      toast.success(`Now tracking ${handle.trim()}`);
+      setHandle("");
 
       fetchUsers();
     } catch (error) {
-      toast.error("Delete failed");
+      toast.error(error.response?.data?.message || "Could not add that handle");
+    } finally {
+      setAdding(false);
     }
   };
 
-  const avgRating =
-    users.length > 0
-      ? Math.round(
-        users.reduce(
-          (sum, user) =>
-            sum + (user.rating || 0),
-          0
-        ) / users.length
-      )
-      : 0;
+  const deleteUser = async (user) => {
+    try {
+      await API.delete(`/users/${user._id}`);
 
-  if (pageLoading) {
-    return (
-      <div className="flex justify-center items-center h-[70vh]">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+      toast.success(`Stopped tracking ${user.handle}`);
+      setPending(null);
+
+      fetchUsers();
+    } catch {
+      toast.error("Could not remove that handle");
+    }
+  };
+
+  const rated = users.filter((user) => user.rating);
+
+  const averageRating = rated.length
+    ? Math.round(rated.reduce((sum, user) => sum + user.rating, 0) / rated.length)
+    : 0;
 
   return (
-    <div className="max-w-6xl mx-auto p-3 sm:p-6 space-y-5 sm:space-y-6 text-white">
+    <div className="min-h-screen flex flex-col">
+      <header className="sticky top-0 z-40 bg-ink/90 backdrop-blur-md border-b border-line">
+        <div className="mx-auto max-w-[1180px] px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center gap-2.5">
+            <svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true">
+              <rect x="2" y="20" width="5" height="7" rx="1.5" fill="#45c17f" />
+              <rect x="10" y="14" width="5" height="13" rx="1.5" fill="#35c2c2" />
+              <rect x="18" y="9" width="5" height="18" rx="1.5" fill="#5d8dfa" />
+              <rect x="26" y="4" width="5" height="23" rx="1.5" fill="#f2994a" />
+            </svg>
+            <span className="wide font-semibold tracking-tight text-[17px]">CP Tracker</span>
+          </Link>
 
-      {/* Header */}
+          <div className="flex items-center gap-2">
+            <Link
+              to="/"
+              className="text-[13px] px-3 py-1.5 rounded-md border border-line text-mute
+                         hover:text-paper hover:border-mute transition-colors"
+            >
+              View site
+            </Link>
 
-      <div className="flex items-center justify-between flex-wrap gap-4">
-
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold bg-linear-to-r from-blue-400 via-cyan-400 to-purple-500 bg-clip-text text-transparent">
-            Admin Dashboard
-          </h1>
-
-          <p className="text-slate-400 mt-1.5 text-sm">
-            Manage tracked Codeforces users
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all duration-300"
-          >
-            <FaHome />
-            Home
-          </button>
-
-          {/* <button
-            onClick={logout}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm rounded-xl bg-red-600 hover:bg-red-700 transition-all duration-300 shadow-lg shadow-red-600/20"
-          >
-            <FaSignOutAlt />
-            Logout
-          </button> */}
-        </div>
-
-      </div>
-
-      {/* Stats */}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-        <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-4 sm:p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-400 text-sm">
-                Total Users
-              </p>
-
-              <h2 className="text-2xl sm:text-3xl font-bold mt-1.5">
-                {users.length}
-              </h2>
-            </div>
-
-            <FaUsers
-              size={24}
-              className="text-blue-400"
-            />
+            <button
+              type="button"
+              onClick={signOut}
+              className="text-[13px] px-3 py-1.5 rounded-md border border-line text-mute
+                         hover:text-paper hover:border-mute transition-colors"
+            >
+              Sign out
+            </button>
           </div>
         </div>
+      </header>
 
-        <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-4 sm:p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-400 text-sm">
-                Average Rating
+      <main className="flex-1 w-full mx-auto max-w-[1180px] px-4 sm:px-6 py-8 sm:py-10 space-y-8">
+        <PageHeader
+          title="Admin"
+          lede="Add a Codeforces handle to start tracking it. Ratings and submissions refresh automatically after that."
+        />
+
+        {loading ? (
+          <Loader label="Loading the roster" />
+        ) : (
+          <>
+            <FigureStrip
+              items={[
+                { label: "Tracked handles", value: users.length },
+                { label: "Rated", value: rated.length },
+                {
+                  label: "Average rating",
+                  value: averageRating || "—",
+                  tone: tierColor(averageRating),
+                },
+              ]}
+            />
+
+            <form onSubmit={addUser} className="border border-line rounded-lg p-4 sm:p-5">
+              <label htmlFor="handle" className="block text-[15px] font-semibold">
+                Add a handle
+              </label>
+
+              <p className="text-mute text-[13px] mt-1.5">
+                Use the exact handle as it appears on Codeforces.
               </p>
 
-              <h2 className="text-2xl sm:text-3xl font-bold mt-1.5">
-                {avgRating}
-              </h2>
-            </div>
+              <div className="flex flex-col sm:flex-row gap-2.5 mt-4">
+                <input
+                  id="handle"
+                  value={handle}
+                  onChange={(event) => setHandle(event.target.value)}
+                  placeholder="tourist"
+                  autoComplete="off"
+                  spellCheck="false"
+                  className="flex-1 bg-ink-2 border border-line rounded-md px-3.5 py-2.5 font-mono text-[14px]
+                             placeholder:text-faint focus:border-accent focus:outline-none transition-colors"
+                />
 
-            <FaChartLine
-              size={24}
-              className="text-purple-400"
-            />
-          </div>
-        </div>
-
-      </div>
-
-      {/* Add User */}
-
-      <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-4 sm:p-5">
-
-        <h2 className="text-lg font-bold mb-4">
-          Add User
-        </h2>
-
-        <div className="flex flex-col sm:flex-row gap-3">
-
-          <input
-            value={handle}
-            onChange={(e) =>
-              setHandle(e.target.value)
-            }
-            placeholder="Enter Codeforces handle"
-            className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
-          />
-
-          <button
-            onClick={addUser}
-            disabled={loading}
-            className="bg-linear-to-r from-blue-600 to-purple-600 px-6 py-3 sm:py-0 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:scale-105 transition disabled:opacity-60 disabled:hover:scale-100"
-          >
-            <FaPlus />
-
-            {loading
-              ? "Adding..."
-              : "Add User"}
-          </button>
-
-        </div>
-
-      </div>
-
-      {/* Users Table */}
-
-      <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden">
-
-        <div className="p-4 sm:p-5 border-b border-slate-800">
-          <h2 className="text-lg font-bold">
-            Tracked Users ({users.length})
-          </h2>
-        </div>
-
-        <div className="overflow-x-auto">
-
-          <table className="w-full min-w-140">
-
-            <thead>
-              <tr className="text-slate-400 text-sm border-b border-slate-800">
-                <th className="p-3 sm:p-4 text-left">
-                  Handle
-                </th>
-
-                <th className="p-3 sm:p-4 text-left">
-                  Rating
-                </th>
-
-                <th className="p-3 sm:p-4 text-left">
-                  Rank
-                </th>
-
-                <th className="p-3 sm:p-4 text-center">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-
-              {users.map((user) => (
-                <tr
-                  key={user._id}
-                  className="border-b border-slate-800 hover:bg-slate-800/40 transition"
+                <button
+                  type="submit"
+                  disabled={adding}
+                  className="px-5 py-2.5 rounded-md bg-paper text-ink font-medium text-[14px]
+                             hover:bg-white disabled:opacity-60 transition-colors"
                 >
-                  <td className="p-3 sm:p-4 font-semibold whitespace-nowrap">
-                    {user.handle}
-                  </td>
+                  {adding ? "Adding…" : "Add handle"}
+                </button>
+              </div>
+            </form>
 
-                  <td className="p-3 sm:p-4 text-blue-400 font-bold">
-                    {user.rating}
-                  </td>
+            <section>
+              <div className="flex items-baseline gap-3 mb-2.5">
+                <h2 className="text-[15px] font-semibold">Tracked handles</h2>
+                <span className="h-px flex-1 bg-line" />
+                <span className="figure text-[12px] text-faint">{users.length}</span>
+              </div>
 
-                  <td className="p-3 sm:p-4 capitalize text-slate-300">
-                    {user.rank}
-                  </td>
+              {users.length === 0 ? (
+                <EmptyState
+                  title="Nothing is being tracked yet"
+                  hint="Add the first Codeforces handle above and the standings will start filling in."
+                />
+              ) : (
+                <div className="border border-line rounded-lg overflow-hidden">
+                  {users.map((user) => (
+                    <div
+                      key={user._id}
+                      className="border-b border-line-soft last:border-b-0 px-4 sm:px-5 py-3.5
+                                 flex flex-wrap items-center gap-x-4 gap-y-3"
+                    >
+                      <span
+                        className="h-8 w-[3px] rounded-full shrink-0"
+                        style={{ background: tierColor(user.rating) }}
+                        aria-hidden="true"
+                      />
 
-                  <td className="p-3 sm:p-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <a
-                        href={`https://codeforces.com/profile/${user.handle}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 sm:px-3 py-2 rounded-lg flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm transition whitespace-nowrap"
-                      >
-                        <FaExternalLinkAlt className="text-xs" />
-                        <span className="hidden sm:inline">View Profile</span>
-                        <span className="sm:hidden">View</span>
-                      </a>
+                      <span className="min-w-0 flex-1">
+                        <Handle handle={user.handle} rating={user.rating} className="text-[15px]" />
+                        <span className="block text-mute text-[12px] capitalize truncate">
+                          {user.rank || "unrated"}
+                        </span>
+                      </span>
 
-                      <button
-                        onClick={() =>
-                          deleteUser(user._id)
-                        }
-                        className="bg-red-600 hover:bg-red-700 px-2.5 sm:px-3 py-2 rounded-lg flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm transition"
-                      >
-                        <FaTrash />
-                        <span className="hidden sm:inline">Delete</span>
-                      </button>
+                      <span className="figure text-[14px] text-mute w-14 text-right shrink-0">
+                        {formatRating(user.rating)}
+                      </span>
+
+                      <span className="text-[12.5px] text-faint w-24 text-right shrink-0 hidden sm:block">
+                        {relativeTime(user.lastOnlineTime)}
+                      </span>
+
+                      {pending === user._id ? (
+                        <span className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => deleteUser(user)}
+                            className="text-[13px] px-3 py-1.5 rounded-md font-medium text-ink"
+                            style={{ background: "var(--color-down)" }}
+                          >
+                            Remove
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setPending(null)}
+                            className="text-[13px] px-3 py-1.5 rounded-md border border-line text-mute hover:text-paper"
+                          >
+                            Keep
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setPending(user._id)}
+                          className="text-[13px] px-3 py-1.5 rounded-md border border-line text-mute
+                                     hover:text-paper hover:border-mute transition-colors shrink-0"
+                        >
+                          Stop tracking
+                        </button>
+                      )}
                     </div>
-                  </td>
-                </tr>
-              ))}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-      </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        )}
+      </main>
 
       <BackToTop />
     </div>
-
   );
 }
 

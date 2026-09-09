@@ -1,20 +1,225 @@
 @import "tailwindcss";
 
-body {
-  background: #020617;
+/* ------------------------------------------------------------------
+   Design tokens
+
+   Every colour that is not a neutral maps to a Codeforces rank tier.
+   Colour in this interface always means "which tier", never decoration.
+------------------------------------------------------------------- */
+
+@theme {
+  --color-ink: #0b0d10;
+  --color-ink-2: #12151a;
+  --color-ink-3: #191d24;
+  --color-line: #262b33;
+  --color-line-soft: #1b1f26;
+
+  --color-paper: #e9eaee;
+  --color-mute: #8b919c;
+  --color-faint: #5c626c;
+
+  --color-t0: #98a0ac;
+  --color-t1: #45c17f;
+  --color-t2: #35c2c2;
+  --color-t3: #5d8dfa;
+  --color-t4: #b07df0;
+  --color-t5: #f2994a;
+  --color-t6: #ff5f56;
+  --color-t7: #ff3b30;
+
+  --color-accent: #5d8dfa;
+  --color-up: #45c17f;
+  --color-down: #ff5f56;
+
+  --font-sans: "Archivo", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+  }
 
-  background:
-    radial-gradient(
-      circle at top left,
-      rgba(59,130,246,0.15),
-      transparent 40%
+  body {
+    margin: 0;
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button,
+  input,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  ::selection {
+    background: var(--color-t3);
+    color: #05070a;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-t3);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-ink);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line);
+    border: 3px solid var(--color-ink);
+    border-radius: 8px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #333a45;
+  }
+}
+
+@layer utilities {
+  /* Archivo carries a width axis. Widening the display sizes gives the
+     standings the proportions of a scoreboard rather than a web heading. */
+  .wide {
+    font-stretch: 115%;
+  }
+
+  .narrow {
+    font-stretch: 92%;
+  }
+
+  .figure {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  .rule-grid {
+    background-image: linear-gradient(
+      to right,
+      var(--color-line-soft) 1px,
+      transparent 1px
     );
+    background-size: 100% 100%;
+  }
 
-  pointer-events: none;
+  /* Horizontal scrollers get an edge fade so the cut is legible as
+     "there is more here" rather than as a clipped layout. */
+  .fade-x {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 18px,
+      #000 calc(100% - 18px),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 18px,
+      #000 calc(100% - 18px),
+      transparent 100%
+    );
+  }
+}
+
+/* One orchestrated entrance: the ladder markers settle onto the axis on
+   first paint. Nothing else on the page animates without being asked to. */
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes sweep {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Recharts leaves a focus rectangle on the plot surface. */
+.recharts-wrapper svg:focus,
+.recharts-surface:focus {
+  outline: none;
+}
+
+/* Toasts inherit the interface rather than the library's default chrome. */
+.Toastify__toast {
+  background: var(--color-ink-2);
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  min-height: 0;
+  padding: 12px 14px;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.45);
+}
+
+.Toastify__toast-body {
+  padding: 0;
+  margin: 0;
+}
+
+.Toastify__close-button {
+  color: var(--color-faint);
+  opacity: 1;
+  align-self: center;
+}
+
+.Toastify__progress-bar {
+  height: 2px;
+  background: var(--color-mute);
 }

@@ -1,469 +1,406 @@
-import { useEffect, useRef, useState } from "react";
-import API from "../services/api";
+import { useEffect, useMemo, useState } from "react";
 
 import {
-  LineChart,
+  CartesianGrid,
   Line,
+  LineChart,
+  ReferenceArea,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
 } from "recharts";
 
-import {
-  FaChartLine,
-  FaTrophy,
-  FaMedal,
-  FaCode,
-  FaChevronDown,
-  FaArrowUp,
-  FaArrowDown,
-  FaUserCircle,
-} from "react-icons/fa";
-import { UseDocumentTitle } from '../hooks/UseDocumentTitle';
+import API from "../services/api";
+import { UseDocumentTitle } from "../hooks/UseDocumentTitle";
 
-function ContestTracker() {
-  UseDocumentTitle('Contest Tracker');
-  const [users, setUsers] = useState([]);
-  const [selectedUser, setSelectedUser] =
-    useState(null);
-  const [loading, setLoading] = useState(true);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+import PageHeader from "../components/PageHeader";
+import FigureStrip from "../components/FigureStrip";
+import Handle from "../components/Handle";
+import Loader from "../components/Loader";
+import EmptyState from "../components/EmptyState";
 
-  const dropdownRef = useRef(null);
+import { BANDS, formatRating, tierColor } from "../lib/rank";
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target)
-      ) {
-        setDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () =>
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      const res = await API.get("/users");
-
-      setUsers(res.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const graphData =
-    selectedUser?.contestHistory?.map(
-      (contest) => ({
-        contest:
-          contest.contestName.length > 15
-            ? contest.contestName.slice(
-                0,
-                15
-              ) + "..."
-            : contest.contestName,
-
-        rating: contest.newRating,
-      })
-    ) || [];
-
-  const bestRank =
-    selectedUser?.contestHistory?.length
-      ? Math.min(
-          ...selectedUser.contestHistory.map(
-            (c) => c.rank
-          )
-        )
-      : 0;
-
-  const biggestGain =
-    selectedUser?.contestHistory?.length
-      ? Math.max(
-          ...selectedUser.contestHistory.map(
-            (c) => c.ratingChange
-          )
-        )
-      : 0;
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-[70vh]">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+function Delta({ value }) {
+  const positive = value >= 0;
 
   return (
-    <div className="space-y-6 text-white">
-      <div>
-        <h1 className="text-3xl font-extrabold bg-linear-to-r from-blue-400 via-cyan-400 to-purple-500 bg-clip-text text-transparent">
-          Contest Tracker
-        </h1>
+    <span
+      className="figure text-[13px] font-medium"
+      style={{ color: positive ? "var(--color-up)" : "var(--color-down)" }}
+    >
+      {positive ? "+" : "−"}
+      {Math.abs(value)}
+    </span>
+  );
+}
 
-        <p className="text-slate-400 mt-1.5 text-sm">
-          Analyze contest performance and rating growth.
-        </p>
-      </div>
+function ChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
 
-      {/* User Selector */}
+  const point = payload[0].payload;
 
-      <div className="relative z-20 bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-5">
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
-          Select User
-        </h2>
+  return (
+    <div className="border border-line bg-ink rounded-md px-3 py-2.5 shadow-xl max-w-[280px]">
+      <p className="text-[12.5px] text-paper leading-snug">{point.fullName || label}</p>
 
-        {users.length === 0 ? (
-          <p className="text-slate-500 text-sm">
-            No tracked users found.
-          </p>
-        ) : (
-          <div className="relative" ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => setDropdownOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between gap-3 bg-slate-800 border border-slate-700 pl-4 pr-4 py-3 rounded-xl text-sm font-medium outline-none focus:border-blue-500 transition"
-            >
-              <span className="flex items-center gap-2.5 min-w-0">
-                <FaUserCircle className="text-blue-400 shrink-0" />
+      <p className="mt-1.5 flex items-center gap-2.5">
+        <span
+          className="figure wide text-[17px] font-semibold"
+          style={{ color: tierColor(point.rating) }}
+        >
+          {point.rating}
+        </span>
+        <Delta value={point.change} />
+      </p>
 
-                <span className="truncate">
-                  {selectedUser
-                    ? `${selectedUser.handle} · ${selectedUser.rating}`
-                    : "Select a user"}
-                </span>
-              </span>
-
-              <FaChevronDown
-                className={`text-slate-500 text-xs shrink-0 transition-transform ${
-                  dropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {dropdownOpen && (
-              <div className="absolute z-50 mt-2 w-full max-h-64 overflow-y-auto bg-slate-800 border border-slate-700 rounded-xl shadow-2xl divide-y divide-slate-700/50">
-                {users.map((user) => (
-                  <button
-                    key={user._id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedUser(user);
-                      setDropdownOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm text-left transition ${
-                      selectedUser?._id === user._id
-                        ? "bg-blue-600/20 text-blue-400"
-                        : "hover:bg-slate-700/60"
-                    }`}
-                  >
-                    <span className="truncate">
-                      {user.handle}
-                    </span>
-
-                    <span className="text-slate-400 shrink-0">
-                      {user.rating}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="relative z-0 space-y-6">
-      {!selectedUser ? (
-        <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-10 flex flex-col items-center justify-center text-center gap-2">
-          <FaUserCircle className="text-slate-600 text-4xl mb-1" />
-
-          <p className="text-slate-400 text-sm">
-            Select a user above to view their contest stats and rating progress.
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* Stats */}
-
-          <div className="grid md:grid-cols-4 gap-4">
-            <StatCard
-              label="Current Rating"
-              value={selectedUser.rating}
-              color="text-blue-400"
-              icon={<FaChartLine size={20} />}
-            />
-
-            <StatCard
-              label="Max Rating"
-              value={selectedUser.maxRating}
-              color="text-green-400"
-              icon={<FaTrophy size={20} />}
-            />
-
-            <StatCard
-              label="Best Rank"
-              value={bestRank || "—"}
-              color="text-yellow-400"
-              icon={<FaMedal size={20} />}
-            />
-
-            <StatCard
-              label="Contests"
-              value={selectedUser.contestCount}
-              color="text-purple-400"
-              icon={<FaCode size={20} />}
-            />
-          </div>
-
-          {/* Rating Graph */}
-
-          <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-5">
-            <h2 className="text-lg font-bold mb-4">
-              Rating Progress
-            </h2>
-
-            {graphData.length === 0 ? (
-              <div className="h-72 flex items-center justify-center text-slate-500 text-sm">
-                No contest history yet.
-              </div>
-            ) : (
-              <div className="h-80">
-                <ResponsiveContainer
-                  width="100%"
-                  height="100%"
-                >
-                  <LineChart
-                    data={graphData}
-                    margin={{
-                      top: 10,
-                      right: 10,
-                      left: -10,
-                      bottom: 0,
-                    }}
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="#1e293b"
-                    />
-
-                    <XAxis
-                      dataKey="contest"
-                      tick={{
-                        fill: "#94a3b8",
-                        fontSize: 11,
-                      }}
-                      axisLine={{ stroke: "#334155" }}
-                      tickLine={false}
-                    />
-
-                    <YAxis
-                      tick={{
-                        fill: "#94a3b8",
-                        fontSize: 11,
-                      }}
-                      axisLine={{ stroke: "#334155" }}
-                      tickLine={false}
-                    />
-
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#0f172a",
-                        border: "1px solid #334155",
-                        borderRadius: "0.75rem",
-                        fontSize: "0.85rem",
-                      }}
-                      labelStyle={{ color: "#e2e8f0" }}
-                      cursor={{ stroke: "#3b82f6", strokeWidth: 1 }}
-                    />
-
-                    <Line
-                      type="monotone"
-                      dataKey="rating"
-                      stroke="#3b82f6"
-                      strokeWidth={3}
-                      dot={{
-                        r: 3,
-                        fill: "#3b82f6",
-                        strokeWidth: 0,
-                      }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-
-          {/* Extra Stats */}
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-5">
-              <p className="text-slate-400 text-sm uppercase tracking-wide mb-2">
-                Rank
-              </p>
-
-              <p className="text-3xl font-bold text-orange-400 capitalize">
-                {selectedUser.rank}
-              </p>
-            </div>
-
-            <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-5">
-              <p className="text-slate-400 text-sm uppercase tracking-wide mb-2">
-                Biggest Rating Gain
-              </p>
-
-              <p className="text-3xl font-bold text-green-400">
-                +{biggestGain}
-              </p>
-            </div>
-          </div>
-
-          {/* Contest History */}
-
-          <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden">
-            <div className="p-5 border-b border-slate-800">
-              <h2 className="text-lg font-bold">
-                Contest History
-              </h2>
-            </div>
-
-            {!selectedUser.contestHistory?.length ? (
-              <p className="text-slate-500 text-sm p-5">
-                No contests recorded yet.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-800 text-slate-400">
-                      <th className="text-left py-3 px-5 font-medium">
-                        Contest
-                      </th>
-
-                      <th className="text-center px-3 font-medium">
-                        Rank
-                      </th>
-
-                      <th className="text-center px-3 font-medium">
-                        Old
-                      </th>
-
-                      <th className="text-center px-3 font-medium">
-                        New
-                      </th>
-
-                      <th className="text-center px-5 font-medium">
-                        Change
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {selectedUser.contestHistory
-                      .slice()
-                      .reverse()
-                      .map(
-                        (contest) => (
-                          <tr
-                            key={
-                              contest.contestId
-                            }
-                            className="border-b border-slate-800 hover:bg-slate-800/40 transition"
-                          >
-                            <td className="py-3.5 px-5 font-medium">
-                              {
-                                contest.contestName
-                              }
-                            </td>
-
-                            <td className="text-center px-3 text-slate-300">
-                              {
-                                contest.rank
-                              }
-                            </td>
-
-                            <td className="text-center px-3 text-slate-400">
-                              {
-                                contest.oldRating
-                              }
-                            </td>
-
-                            <td className="text-center px-3 text-blue-400 font-semibold">
-                              {
-                                contest.newRating
-                              }
-                            </td>
-
-                            <td className="text-center px-5">
-                              <span
-                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                  contest.ratingChange >=
-                                  0
-                                    ? "bg-green-500/10 text-green-400"
-                                    : "bg-red-500/10 text-red-400"
-                                }`}
-                              >
-                                {contest.ratingChange >= 0 ? (
-                                  <FaArrowUp className="text-[10px]" />
-                                ) : (
-                                  <FaArrowDown className="text-[10px]" />
-                                )}
-                                {contest.ratingChange > 0
-                                  ? "+"
-                                  : ""}
-                                {
-                                  contest.ratingChange
-                                }
-                              </span>
-                            </td>
-                          </tr>
-                        )
-                      )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-      </div>
+      <p className="text-faint text-[11.5px] mt-1">
+        Rank {point.rank?.toLocaleString()}
+      </p>
     </div>
   );
 }
 
-function StatCard({ label, value, color, icon }) {
+function ContestTracker() {
+  UseDocumentTitle("Progress · CP Tracker");
+
+  const [users, setUsers] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [query, setQuery] = useState("");
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+
+    API.get("/users")
+      .then((res) => {
+        if (!live) return;
+
+        setUsers(res.data);
+        if (res.data.length) setSelectedId(res.data[0]._id);
+      })
+      .catch(() => live && setFailed(true))
+      .finally(() => live && setLoading(false));
+
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const selected = users.find((user) => user._id === selectedId) || null;
+  const history = useMemo(() => selected?.contestHistory || [], [selected]);
+
+  const chart = useMemo(
+    () =>
+      history.map((contest, index) => ({
+        index: index + 1,
+        at: contest.contestTime ? new Date(contest.contestTime).getTime() : index,
+        fullName: contest.contestName,
+        rating: contest.newRating,
+        change: contest.ratingChange,
+        rank: contest.rank,
+      })),
+    [history]
+  );
+
+  // Round the window out to whole hundreds, then label it at the tier
+  // boundaries so the gridlines and the colour bands agree.
+  const [bounds, ticks] = useMemo(() => {
+    if (!chart.length) return [[800, 1600], [800, 1200, 1600]];
+
+    const values = chart.map((point) => point.rating);
+    const low = Math.max(0, Math.floor((Math.min(...values) - 100) / 100) * 100);
+    const high = Math.ceil((Math.max(...values) + 100) / 100) * 100;
+
+    const clearance = (high - low) * 0.08;
+
+    const inner = BANDS.map((band) => band.from).filter(
+      (value) => value > low + clearance && value < high - clearance
+    );
+
+    return [[low, high], [low, ...inner, high]];
+  }, [chart]);
+
+  if (loading) return <Loader label="Loading contest history" />;
+
+  if (failed) {
+    return (
+      <EmptyState
+        title="Could not reach the tracker service"
+        hint="The backend is not responding. Start it, then reload this page."
+      />
+    );
+  }
+
+  const bestRank = history.length ? Math.min(...history.map((contest) => contest.rank)) : null;
+  const bestGain = history.length ? Math.max(...history.map((contest) => contest.ratingChange)) : null;
+  const lastChange = history.length ? history[history.length - 1].ratingChange : null;
+
   return (
-    <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-slate-400 text-sm">
-            {label}
-          </p>
+    <div className="space-y-8">
+      <PageHeader
+        title="Progress"
+        lede="Every rated contest for one person, plotted against the tier they were climbing through."
+      />
 
-          <h2 className={`text-3xl font-bold mt-1.5 ${color}`}>
-            {value}
-          </h2>
-        </div>
+      {users.length === 0 ? (
+        <EmptyState
+          title="No one is being tracked yet"
+          hint="Sign in as an admin and add a Codeforces handle to start collecting contest history."
+        />
+      ) : (
+        <>
+          <div className="space-y-3">
+            {users.length > 12 && (
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Find a handle"
+                aria-label="Find a handle"
+                className="w-full sm:max-w-[280px] bg-ink-2 border border-line rounded-md
+                           px-3.5 py-2 font-mono text-[13px] placeholder:text-faint
+                           focus:border-accent focus:outline-none transition-colors"
+              />
+            )}
 
-        <div className={`${color} opacity-80`}>
-          {icon}
-        </div>
-      </div>
+            <div className="flex flex-wrap gap-1.5">
+            {users
+              .filter((user) =>
+                user.handle.toLowerCase().includes(query.trim().toLowerCase())
+              )
+              .map((user) => {
+              const active = user._id === selectedId;
+              const colour = tierColor(user.rating);
+
+              return (
+                <button
+                  key={user._id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedId(user._id);
+                    setShowAll(false);
+                  }}
+                  aria-pressed={active}
+                  className="font-mono text-[13px] px-3 py-1.5 rounded-md border transition-colors"
+                  style={{
+                    color: active ? "#0b0d10" : colour,
+                    background: active ? colour : "transparent",
+                    borderColor: active ? colour : "var(--color-line)",
+                  }}
+                >
+                  {user.handle}
+                </button>
+              );
+            })}
+            </div>
+          </div>
+
+          {selected && (
+            <>
+              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <h2 className="text-[22px] font-semibold">
+                  <Handle handle={selected.handle} rating={selected.rating} className="text-[22px]" />
+                </h2>
+
+                <span className="text-mute text-[14px] capitalize">
+                  {selected.rank || "unrated"}
+                </span>
+              </div>
+
+              <FigureStrip
+                items={[
+                  {
+                    label: "Current rating",
+                    value: formatRating(selected.rating),
+                    tone: tierColor(selected.rating),
+                  },
+                  {
+                    label: "Peak rating",
+                    value: formatRating(selected.maxRating),
+                    tone: tierColor(selected.maxRating),
+                  },
+                  { label: "Contests", value: selected.contestCount ?? 0 },
+                  { label: "Best rank", value: bestRank ? bestRank.toLocaleString() : "—" },
+                  {
+                    label: "Biggest gain",
+                    value: bestGain === null ? "—" : `+${bestGain}`,
+                    tone: bestGain > 0 ? "var(--color-up)" : undefined,
+                  },
+                ]}
+              />
+
+              <section className="border border-line rounded-lg overflow-hidden">
+                <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-3.5 border-b border-line bg-ink-2">
+                  <h3 className="text-[15px] font-semibold">Rating over time</h3>
+
+                  {lastChange !== null && (
+                    <p className="text-[12.5px] text-mute">
+                      Last contest <Delta value={lastChange} />
+                    </p>
+                  )}
+                </div>
+
+                {chart.length === 0 ? (
+                  <p className="text-mute text-[14px] px-5 py-12 text-center">
+                    {selected.handle} has not competed in a rated contest yet.
+                  </p>
+                ) : (
+                  <div className="h-[260px] sm:h-[340px] p-3 sm:p-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chart} margin={{ top: 8, right: 12, left: -14, bottom: 0 }}>
+                        {BANDS.map((band) => (
+                          <ReferenceArea
+                            key={band.from}
+                            y1={band.from}
+                            y2={band.to}
+                            fill={band.color}
+                            fillOpacity={0.12}
+                            stroke="none"
+                            ifOverflow="hidden"
+                          />
+                        ))}
+
+                        <CartesianGrid stroke="#1b1f26" vertical={false} />
+
+                        <XAxis
+                          dataKey="at"
+                          type="number"
+                          scale="time"
+                          domain={["dataMin", "dataMax"]}
+                          tickFormatter={(value) =>
+                            new Date(value).toLocaleDateString(undefined, {
+                              month: "short",
+                              year: "2-digit",
+                            })
+                          }
+                          tick={{ fill: "#5c626c", fontSize: 11, fontFamily: "IBM Plex Mono" }}
+                          axisLine={{ stroke: "#262b33" }}
+                          tickLine={false}
+                          minTickGap={44}
+                        />
+
+                        <YAxis
+                          domain={bounds}
+                          ticks={ticks}
+                          interval={0}
+                          tick={{ fill: "#5c626c", fontSize: 11, fontFamily: "IBM Plex Mono" }}
+                          axisLine={false}
+                          tickLine={false}
+                          width={48}
+                        />
+
+                        <Tooltip
+                          content={<ChartTooltip />}
+                          cursor={{ stroke: "#3a414c", strokeWidth: 1 }}
+                        />
+
+                        <Line
+                          type="linear"
+                          dataKey="rating"
+                          stroke={tierColor(selected.rating)}
+                          strokeWidth={1.8}
+                          dot={{ r: 2.2, fill: tierColor(selected.rating), strokeWidth: 0 }}
+                          activeDot={{ r: 4.5 }}
+                          isAnimationActive={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                <p className="text-faint text-[11.5px] px-4 sm:px-5 py-3 border-t border-line">
+                  Bands mark the Codeforces tiers, from Newbie at the bottom to Legendary
+                  Grandmaster at the top.
+                </p>
+              </section>
+
+              {history.length > 0 && (
+                <section className="border border-line rounded-lg overflow-hidden">
+                  <div className="px-4 sm:px-5 py-3.5 border-b border-line bg-ink-2">
+                    <h3 className="text-[15px] font-semibold">
+                      Contest history
+                      <span className="text-faint font-normal ml-2 text-[13px]">
+                        {history.length}
+                      </span>
+                    </h3>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[560px]">
+                      <thead>
+                        <tr className="text-faint text-[12px] border-b border-line">
+                          <th className="font-normal text-left py-2.5 pl-4 sm:pl-5 pr-3">Contest</th>
+                          <th className="font-normal text-right py-2.5 px-3 w-24">Rank</th>
+                          <th className="font-normal text-right py-2.5 px-3 w-24">Rating</th>
+                          <th className="font-normal text-right py-2.5 pl-3 pr-4 sm:pr-5 w-24">
+                            Change
+                          </th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {history
+                          .slice()
+                          .reverse()
+                          .slice(0, showAll ? undefined : 20)
+                          .map((contest) => (
+                            <tr
+                              key={contest.contestId}
+                              className="border-b border-line-soft last:border-b-0 hover:bg-ink-2 transition-colors"
+                            >
+                              <td className="py-3 pl-4 sm:pl-5 pr-3 text-[13.5px]">
+                                <a
+                                  href={`https://codeforces.com/contest/${contest.contestId}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="hover:underline underline-offset-4"
+                                >
+                                  {contest.contestName}
+                                </a>
+                              </td>
+
+                              <td className="py-3 px-3 text-right figure text-[13.5px] text-mute">
+                                {contest.rank?.toLocaleString()}
+                              </td>
+
+                              <td
+                                className="py-3 px-3 text-right figure text-[13.5px]"
+                                style={{ color: tierColor(contest.newRating) }}
+                              >
+                                {contest.newRating}
+                              </td>
+
+                              <td className="py-3 pl-3 pr-4 sm:pr-5 text-right">
+                                <Delta value={contest.ratingChange} />
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {history.length > 20 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAll((prev) => !prev)}
+                      className="w-full py-3 text-[13px] text-mute hover:text-paper
+                                 border-t border-line transition-colors"
+                    >
+                      {showAll
+                        ? "Show the 20 most recent"
+                        : `Show all ${history.length} contests`}
+                    </button>
+                  )}
+                </section>
+              )}
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }

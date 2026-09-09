@@ -1,254 +1,279 @@
-import { useEffect, useState } from "react";
-import {
-  FaCalendarAlt,
-  FaExternalLinkAlt,
-  FaClock,
-  FaTrophy,
-  FaCode,
-  FaRegCalendarPlus,
-} from "react-icons/fa";
+import { useEffect, useMemo, useState } from "react";
 
 import { getCalendar } from "../services/calendarService";
-import { UseDocumentTitle } from '../hooks/UseDocumentTitle';
+import { UseDocumentTitle } from "../hooks/UseDocumentTitle";
+
+import PageHeader from "../components/PageHeader";
+import Loader from "../components/Loader";
+import EmptyState from "../components/EmptyState";
+
+const dayKey = (value) => new Date(value).toDateString();
+
+function dayLabel(value) {
+  const date = new Date(value);
+  const today = new Date();
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  if (date.toDateString() === today.toDateString()) return "Today";
+  if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
+
+  return date.toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
+const timeLabel = (value) =>
+  new Date(value).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+
+function countdown(startTime, now) {
+  const diff = new Date(startTime) - now;
+  if (diff <= 0) return { text: "starting now", urgent: true };
+
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+
+  const urgent = diff < 6 * 3600000;
+
+  if (days > 0) return { text: `${days}d ${hours}h`, urgent };
+  if (hours > 0) return { text: `${hours}h ${minutes}m ${seconds}s`, urgent };
+
+  return { text: `${minutes}m ${seconds}s`, urgent };
+}
+
+const toGCalDate = (date) => date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+
+function googleCalendarLink(contest) {
+  const start = new Date(contest.startTime);
+  const end = new Date(start.getTime() + (contest.duration || 2) * 3600000);
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: contest.name,
+    dates: `${toGCalDate(start)}/${toGCalDate(end)}`,
+    details: `${contest.platform || "Codeforces"} contest. Details: ${contest.link}`,
+    location: contest.link,
+  });
+
+  return `https://www.google.com/calendar/render?${params.toString()}`;
+}
+
+function Tag({ children }) {
+  return (
+    <span className="font-mono text-[11.5px] text-mute border border-line rounded px-1.5 py-0.5">
+      {children}
+    </span>
+  );
+}
 
 function ContestCalendar() {
-  UseDocumentTitle('Contest Calendar');
+  UseDocumentTitle("Calendar · CP Tracker");
+
   const [upcoming, setUpcoming] = useState([]);
   const [previous, setPrevious] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [now, setNow] = useState(new Date());
+  const [failed, setFailed] = useState(false);
+  const [platform, setPlatform] = useState("All");
+  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    fetchCalendar();
+    let live = true;
+
+    getCalendar()
+      .then((data) => {
+        if (!live) return;
+        setUpcoming(data.upcoming || []);
+        setPrevious(data.previous || []);
+      })
+      .catch(() => live && setFailed(true))
+      .finally(() => live && setLoading(false));
+
+    return () => {
+      live = false;
+    };
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setNow(new Date());
-    }, 1000);
-
+    const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const fetchCalendar = async () => {
-    try {
-      const data = await getCalendar();
+  const platforms = useMemo(
+    () => ["All", ...new Set(upcoming.map((contest) => contest.platform || "Codeforces"))],
+    [upcoming]
+  );
 
-      setUpcoming(data.upcoming || []);
-      setPrevious(data.previous || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const filtered = useMemo(
+    () =>
+      platform === "All"
+        ? upcoming
+        : upcoming.filter((contest) => (contest.platform || "Codeforces") === platform),
+    [upcoming, platform]
+  );
 
-  const getCountdown = (startTime) => {
-    const diff = new Date(startTime) - now;
+  const days = useMemo(() => {
+    const groups = new Map();
 
-    if (diff <= 0) return "Starting Soon";
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hrs = Math.floor(
-      (diff % (1000 * 60 * 60 * 24)) /
-        (1000 * 60 * 60)
-    );
-    const mins = Math.floor(
-      (diff % (1000 * 60 * 60)) / (1000 * 60)
-    );
-    const secs = Math.floor(
-      (diff % (1000 * 60)) / 1000
-    );
-
-    if (days > 0) {
-      return `${days}d ${hrs}h ${mins}m left`;
-    }
-
-    if (hrs > 0) {
-      return `${hrs}h ${mins}m ${secs}s left`;
-    }
-
-    return `${mins}m ${secs}s left`;
-  };
-
-  const toGCalDate = (date) =>
-    date
-      .toISOString()
-      .replace(/[-:]/g, "")
-      .split(".")[0] + "Z";
-
-  const getGoogleCalendarLink = (contest) => {
-    const start = new Date(contest.startTime);
-    const end = new Date(
-      start.getTime() + contest.duration * 60 * 60 * 1000
-    );
-
-    const params = new URLSearchParams({
-      action: "TEMPLATE",
-      text: contest.name,
-      dates: `${toGCalDate(start)}/${toGCalDate(end)}`,
-      details: `${contest.platform} contest: ${contest.name}. More info: ${contest.link}`,
-      location: contest.link,
+    filtered.forEach((contest) => {
+      const key = dayKey(contest.startTime);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(contest);
     });
 
-    return `https://www.google.com/calendar/render?${params.toString()}`;
-  };
+    return [...groups.entries()];
+  }, [filtered]);
 
-  if (loading) {
+  if (loading) return <Loader label="Checking the contest schedule" />;
+
+  if (failed) {
     return (
-      <div className="flex justify-center items-center h-96">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
+      <EmptyState
+        title="Could not load the schedule"
+        hint="The backend could not reach the contest APIs. Try again in a moment."
+      />
     );
   }
 
   return (
     <div className="space-y-8">
-      {/* Header */}
+      <PageHeader
+        title="Calendar"
+        lede="Contests coming up across Codeforces, LeetCode, CodeChef and AtCoder, with the ones already finished below."
+      />
 
-      <div>
-        <h1 className="text-3xl font-bold mb-2">
-          📅 Contest Calendar
-        </h1>
-
-        <p className="text-slate-400 text-base">
-          Upcoming and recent Codeforces contests.
-        </p>
-      </div>
-
-      {/* Upcoming */}
-
-      <section>
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <FaCalendarAlt className="text-blue-400" />
-          Upcoming Contests
-        </h2>
-
-        <div className="grid gap-4">
-          {upcoming.length === 0 ? (
-            <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl text-slate-400 text-sm">
-              No upcoming contests found.
+      {upcoming.length === 0 ? (
+        <EmptyState
+          title="No contests announced"
+          hint="Nothing is scheduled on any tracked platform right now. Check back in a day or two."
+        />
+      ) : (
+        <section className="space-y-6">
+          {platforms.length > 2 && (
+            <div className="flex flex-wrap gap-1.5">
+              {platforms.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => setPlatform(name)}
+                  aria-pressed={platform === name}
+                  className={`text-[13px] px-3 py-1.5 rounded-md border transition-colors ${
+                    platform === name
+                      ? "border-mute text-paper bg-ink-3"
+                      : "border-line text-mute hover:text-paper"
+                  }`}
+                >
+                  {name}
+                </button>
+              ))}
             </div>
-          ) : (
-            upcoming.map((contest) => (
-              <div
-                key={contest.id}
-                className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-blue-500 transition"
-              >
-                <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      {contest.name}
-                    </h3>
-
-                    <div className="mt-2.5 flex flex-wrap items-center gap-3 text-sm text-slate-400">
-                      <span className="flex items-center gap-1.5">
-                        <FaClock className="text-xs" />
-                        {contest.duration} hrs
-                      </span>
-
-                      <span>
-                        {new Date(
-                          contest.startTime
-                        ).toLocaleString()}
-                      </span>
-
-                      <span className="bg-blue-600/20 text-blue-400 px-2.5 py-0.5 rounded-full text-xs">
-                        {contest.platform}
-                      </span>
-                    </div>
-
-                    <div className="mt-2.5 text-yellow-400 font-semibold text-sm tabular-nums">
-                      ⏳ {getCountdown(contest.startTime)}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <a
-                      href={getGoogleCalendarLink(contest)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2.5 text-sm rounded-xl font-medium h-fit transition flex items-center gap-2"
-                      title="Add to Google Calendar"
-                    >
-                      <FaRegCalendarPlus className="text-xs" />
-                      Add to Calendar
-                    </a>
-
-                    <a
-                      href={contest.link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="bg-blue-600 hover:bg-blue-700 px-5 py-2.5 text-sm rounded-xl font-medium h-fit transition"
-                    >
-                      Register
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ))
           )}
-        </div>
-      </section>
 
-      {/* Previous */}
+          {days.map(([key, contests]) => (
+            <div key={key}>
+              <div className="flex items-baseline gap-3 mb-2.5">
+                <h2 className="text-[15px] font-semibold">{dayLabel(contests[0].startTime)}</h2>
+                <span className="h-px flex-1 bg-line" />
+                <span className="figure text-[12px] text-faint">
+                  {contests.length} {contests.length === 1 ? "contest" : "contests"}
+                </span>
+              </div>
 
-      <section>
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <FaTrophy className="text-purple-400" />
-          Previous Contests
-        </h2>
+              <div className="border border-line rounded-lg overflow-hidden">
+                {contests.map((contest) => {
+                  const clock = countdown(contest.startTime, now);
 
-        <div className="grid gap-4">
-          {previous.length === 0 ? (
-            <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl text-slate-400 text-sm">
-              No previous contests found.
+                  return (
+                    <article
+                      key={contest.id}
+                      className="border-b border-line-soft last:border-b-0 px-4 sm:px-5 py-4
+                                 flex flex-col lg:flex-row lg:items-center gap-4"
+                    >
+                      <div className="figure text-[15px] text-paper w-20 shrink-0 whitespace-nowrap">
+                        {timeLabel(contest.startTime)}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-[15px] leading-snug">{contest.name}</h3>
+
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <Tag>{contest.platform || "Codeforces"}</Tag>
+                          <Tag>{contest.duration}h</Tag>
+
+                          <span
+                            className="figure text-[12.5px]"
+                            style={{ color: clock.urgent ? "var(--color-t5)" : "var(--color-mute)" }}
+                          >
+                            {clock.text}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 shrink-0">
+                        <a
+                          href={googleCalendarLink(contest)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[13px] text-mute hover:text-paper transition-colors"
+                        >
+                          Add to calendar
+                        </a>
+
+                        <a
+                          href={contest.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[13px] px-3.5 py-2 rounded-md border border-line
+                                     hover:border-mute transition-colors"
+                        >
+                          Register
+                        </a>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             </div>
-          ) : (
-            previous.map((contest) => (
-              <div
+          ))}
+        </section>
+      )}
+
+      {previous.length > 0 && (
+        <section>
+          <div className="flex items-baseline gap-3 mb-2.5">
+            <h2 className="text-[15px] font-semibold">Recently finished</h2>
+            <span className="h-px flex-1 bg-line" />
+          </div>
+
+          <div className="border border-line rounded-lg overflow-hidden">
+            {previous.map((contest) => (
+              <a
                 key={contest.id}
-                className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-green-500 transition"
+                href={contest.link}
+                target="_blank"
+                rel="noreferrer"
+                className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 sm:px-5 py-3.5
+                           border-b border-line-soft last:border-b-0 hover:bg-ink-2 transition-colors"
               >
-                <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      {contest.name}
-                    </h3>
+                <span className="figure text-[12.5px] text-faint w-24 shrink-0">
+                  {new Date(contest.startTime).toLocaleDateString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </span>
 
-                    <div className="mt-2.5 flex flex-wrap items-center gap-3 text-sm text-slate-400">
-                      <span className="flex items-center gap-1.5">
-                        <FaCode className="text-xs" />
-                        {contest.type}
-                      </span>
+                <span className="text-[14px] flex-1 min-w-0">{contest.name}</span>
 
-                      <span>
-                        {new Date(
-                          contest.startTime
-                        ).toLocaleString()}
-                      </span>
-
-                      <span>
-                        Duration: {contest.duration} hrs
-                      </span>
-                    </div>
-                  </div>
-
-                  <a
-                    href={contest.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-green-600 hover:bg-green-700 px-5 py-2.5 text-sm rounded-xl flex items-center gap-2 font-medium h-fit transition shrink-0"
-                  >
-                    Open Contest
-                    <FaExternalLinkAlt className="text-xs" />
-                  </a>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
+                <Tag>{contest.type}</Tag>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

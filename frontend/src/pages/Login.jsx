@@ -1,57 +1,50 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+
 import API from "../services/api";
-import { UseDocumentTitle } from '../hooks/UseDocumentTitle';
+import { UseDocumentTitle } from "../hooks/UseDocumentTitle";
+import { BANDS } from "../lib/rank";
 
 function Login() {
-  UseDocumentTitle('Admin Login');
+  UseDocumentTitle("Sign in · CP Tracker");
+
   const navigate = useNavigate();
 
-  const [username, setUsername] =
-    useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [reveal, setReveal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const [password, setPassword] =
-    useState("");
+  const field =
+    "w-full bg-ink-2 border border-line rounded-md px-3.5 py-2.5 text-[15px] " +
+    "placeholder:text-faint focus:border-accent focus:outline-none transition-colors";
 
-  const [loading, setLoading] =
-    useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
 
     if (!username.trim() || !password.trim()) {
-      toast.error(
-        "Please enter username and password"
-      );
+      setError("Enter both a username and a password.");
       return;
     }
 
     try {
       setLoading(true);
 
-      const res = await API.post(
-        "/admin/login",
-        {
-          username,
-          password,
-        }
-      );
+      const res = await API.post("/admin/login", { username, password });
 
-      sessionStorage.setItem(
-        "token",
-        res.data.token
-      );
-
-      toast.success(
-        "Login successful"
-      );
+      sessionStorage.setItem("token", res.data.token);
+      toast.success("Signed in");
 
       navigate("/admin");
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-        "Invalid credentials"
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          (err.response
+            ? "That username and password do not match."
+            : "Could not reach the tracker service.")
       );
     } finally {
       setLoading(false);
@@ -59,177 +52,100 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 relative overflow-hidden flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+      <div className="w-full max-w-[380px]">
+        <Link to="/" className="flex items-center gap-2.5 mb-8 w-fit">
+          <svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true">
+            <rect x="2" y="20" width="5" height="7" rx="1.5" fill="#45c17f" />
+            <rect x="10" y="14" width="5" height="13" rx="1.5" fill="#35c2c2" />
+            <rect x="18" y="9" width="5" height="18" rx="1.5" fill="#5d8dfa" />
+            <rect x="26" y="4" width="5" height="23" rx="1.5" fill="#f2994a" />
+          </svg>
+          <span className="wide font-semibold tracking-tight text-[17px]">CP Tracker</span>
+        </Link>
 
-      {/* Background Effects */}
+        <div className="border border-line rounded-lg overflow-hidden">
+          <div className="flex h-1" aria-hidden="true">
+            {BANDS.map((band) => (
+              <span
+                key={band.from}
+                style={{ background: band.color, opacity: 0.6, flex: band.to - band.from }}
+              />
+            ))}
+          </div>
 
-      <div className="absolute top-0 left-0 w-72 h-72 sm:w-96 sm:h-96 bg-blue-600/20 blur-[100px] sm:blur-[120px] rounded-full" />
+          <form onSubmit={handleSubmit} className="p-6 sm:p-7" noValidate>
+            <h1 className="text-[22px] font-semibold">Sign in</h1>
 
-      <div className="absolute bottom-0 right-0 w-72 h-72 sm:w-96 sm:h-96 bg-purple-600/20 blur-[100px] sm:blur-[120px] rounded-full" />
+            <p className="text-mute text-[13.5px] mt-1.5">
+              Admins add and remove the Codeforces handles this site tracks.
+            </p>
 
-      {/* Login Card */}
+            <div className="mt-6 space-y-4">
+              <div>
+                <label htmlFor="username" className="block text-[13px] text-mute mb-1.5">
+                  Username
+                </label>
 
-      <div className="relative z-10 w-full max-w-lg">
+                <input
+                  id="username"
+                  type="text"
+                  autoComplete="username"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  className={field}
+                />
+              </div>
 
-        <div className="text-center mb-6 sm:mb-8">
+              <div>
+                <label htmlFor="password" className="block text-[13px] text-mute mb-1.5">
+                  Password
+                </label>
 
-          {/* <h1 className="text-6xl font-black bg-linear-to-r from-blue-400 via-cyan-400 to-purple-500 bg-clip-text text-transparent">
-            CP Tracker
-          </h1> */}
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={reveal ? "text" : "password"}
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className={`${field} pr-16`}
+                  />
 
-          {/* <p className="text-slate-400 mt-3 text-lg">
-            Competitive Programming Progress Dashboard
-          </p> */}
+                  <button
+                    type="button"
+                    onClick={() => setReveal((prev) => !prev)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[12.5px] text-faint hover:text-paper px-1"
+                  >
+                    {reveal ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {error && (
+              <p role="alert" className="mt-4 text-[13px]" style={{ color: "var(--color-down)" }}>
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-6 py-2.5 rounded-md bg-paper text-ink font-medium text-[14.5px]
+                         hover:bg-white disabled:opacity-60 transition-colors"
+            >
+              {loading ? "Signing in…" : "Sign in"}
+            </button>
+          </form>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="
-        bg-slate-900/70
-        backdrop-blur-xl
-        border border-slate-700/50
-        rounded-3xl
-        p-6
-        sm:p-10
-        shadow-[0_0_60px_rgba(59,130,246,0.15)]
-      "
+        <Link
+          to="/"
+          className="block mt-5 text-[13px] text-faint hover:text-paper transition-colors"
         >
-
-          <div className="flex items-center justify-between mb-6 sm:mb-8 gap-3 flex-wrap">
-
-            <div>
-              <h2 className="text-2xl sm:text-4xl font-bold text-white">
-                Admin Login
-              </h2>
-
-              <p className="text-slate-400 mt-2 text-sm sm:text-base">
-                Manage tracked Codeforces users
-              </p>
-            </div>
-
-            <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs sm:text-sm font-medium">
-              Admin
-            </div>
-          </div>
-
-          {/* Username */}
-
-          <div className="mb-5">
-            <label className="block text-slate-400 mb-2 text-sm">
-              Username
-            </label>
-
-            <input
-              type="text"
-              placeholder="Enter username"
-              value={username}
-              onChange={(e) =>
-                setUsername(e.target.value)
-              }
-              className="
-            w-full
-            bg-slate-800/70
-            border border-slate-700
-            text-white
-            px-4
-            sm:px-5
-            py-3
-            sm:py-4
-            rounded-2xl
-            outline-none
-            focus:border-blue-500
-            focus:ring-2
-            focus:ring-blue-500/20
-            transition-all
-          "
-            />
-          </div>
-
-          {/* Password */}
-
-          <div className="mb-6 sm:mb-8">
-            <label className="block text-slate-400 mb-2 text-sm">
-              Password
-            </label>
-
-            <input
-              type="password"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) =>
-                setPassword(e.target.value)
-              }
-              className="
-            w-full
-            bg-slate-800/70
-            border border-slate-700
-            text-white
-            px-4
-            sm:px-5
-            py-3
-            sm:py-4
-            rounded-2xl
-            outline-none
-            focus:border-purple-500
-            focus:ring-2
-            focus:ring-purple-500/20
-            transition-all
-          "
-            />
-          </div>
-
-          {/* Login */}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="
-          w-full
-          py-3.5
-          sm:py-4
-          rounded-2xl
-          font-bold
-          text-base
-          sm:text-lg
-          bg-linear-to-r
-          from-blue-600
-          to-purple-600
-          hover:scale-[1.02]
-          active:scale-[0.99]
-          transition-all
-          shadow-lg
-        "
-          >
-            {loading
-              ? "Signing In..."
-              : "Login"}
-          </button>
-
-          {/* Back */}
-
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="
-          w-full
-          mt-4
-          py-3.5
-          sm:py-4
-          rounded-2xl
-          bg-slate-800
-          hover:bg-slate-700
-          text-white
-          font-semibold
-          transition-all
-        "
-          >
-            Back to Home
-          </button>
-
-          <div className="mt-6 sm:mt-8 text-center text-sm text-slate-500">
-            Authorized administrators only
-          </div>
-        </form>
+          Back to the standings
+        </Link>
       </div>
     </div>
   );

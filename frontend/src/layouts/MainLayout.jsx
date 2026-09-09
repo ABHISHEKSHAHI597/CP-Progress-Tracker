@@ -1,23 +1,23 @@
 import { Outlet } from "react-router-dom";
 
-import Sidebar from "../components/Sidebar";
-import Navbar from "../components/Navbar";
+import TopNav from "../components/TopNav";
 import BackToTop from "../components/BackToTop";
 
 function MainLayout() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex">
-      {/* Fixed Sidebar (drawer on mobile, fixed column on desktop) */}
-      <Sidebar />
+    <div className="min-h-screen flex flex-col">
+      <TopNav />
 
-      {/* Main Content */}
-      <div className="flex-1 lg:ml-72 flex flex-col min-w-0">
-        <Navbar />
+      <main className="flex-1 w-full mx-auto max-w-[1180px] px-4 sm:px-6 py-8 sm:py-10">
+        <Outlet />
+      </main>
 
-        <main className="p-4 pt-20 sm:p-6 sm:pt-24 lg:pt-6">
-          <Outlet />
-        </main>
-      </div>
+      <footer className="border-t border-line">
+        <div className="mx-auto max-w-[1180px] px-4 sm:px-6 py-6 flex flex-wrap gap-x-6 gap-y-2 items-center justify-between text-[12.5px] text-faint">
+          <p>Ratings come from Codeforces. Contests also come from LeetCode, CodeChef and AtCoder.</p>
+          <p>Ratings refresh every few minutes, solve counts every half hour.</p>
+        </div>
+      </footer>
 
       <BackToTop />
     </div>

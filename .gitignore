@@ -1,0 +1,8 @@
+node_modules
+dist
+.DS_Store
+*.log
+
+# Local notes about which secret goes where, and how to ship it.
+ENV.md
+DEPLOYMENT.md

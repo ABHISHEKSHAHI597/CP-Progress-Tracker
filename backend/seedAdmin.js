@@ -1,28 +1,35 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-import dotenv from "dotenv";
-import path from "path";
+
+import { MONGODB_URI } from "./src/config/env.js";
 import Admin from "./src/models/Admin.js";
 
-dotenv.config();
+const username = process.env.ADMIN_USERNAME;
+const password = process.env.ADMIN_PASSWORD;
 
-await mongoose.connect(
-  process.env.MONGODB_URI
-);
-
-const hashedPassword =
-  await bcrypt.hash(
-    "abhishek@b25",
-    10
+if (!username || !password) {
+  console.error(
+    "Set ADMIN_USERNAME and ADMIN_PASSWORD in backend/.env, then run this again."
   );
+  process.exit(1);
+}
 
-await Admin.create({
-  username: "abhishek",
-  password: hashedPassword,
-});
+await mongoose.connect(MONGODB_URI);
 
-console.log(
-  "Admin Created Successfully"
-);
+const existing = await Admin.findOne({ username });
+
+if (existing) {
+  existing.password = await bcrypt.hash(password, 10);
+  await existing.save();
+
+  console.log(`Password updated for admin "${username}".`);
+} else {
+  await Admin.create({
+    username,
+    password: await bcrypt.hash(password, 10),
+  });
+
+  console.log(`Admin "${username}" created.`);
+}
 
 process.exit();

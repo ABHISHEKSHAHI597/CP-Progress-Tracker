@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 
-import { ALLOWED_ORIGINS } from "./config/env.js";
+import { ALLOWED_ORIGINS, TRUST_PROXY } from "./config/env.js";
 import userRoutes from "./routes/user.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import contestRoutes from "./routes/contest.routes.js";
@@ -9,6 +9,10 @@ import calendarRoutes from "./routes/calendar.routes.js";
 import helmet from "helmet";
 
 const app = express();
+
+// Without this every request looks like it came from the proxy, so the rate
+// limiters would put all visitors in one bucket.
+app.set("trust proxy", TRUST_PROXY);
 
 app.use(
   cors({

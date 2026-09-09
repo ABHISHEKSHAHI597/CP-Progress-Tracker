@@ -134,7 +134,7 @@ function ContestCalendar() {
     return (
       <EmptyState
         title="Could not load the schedule"
-        hint="The backend could not reach the contest APIs. Try again in a moment."
+        hint="The contest schedule could not be loaded. Try again in a moment."
       />
     );
   }

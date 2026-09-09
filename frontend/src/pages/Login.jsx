@@ -45,7 +45,7 @@ function Login() {
         err.response?.data?.message ||
           (err.response
             ? "That username and password do not match."
-            : "Could not reach the tracker service.")
+            : "The service is not answering right now. Try again in a moment.")
       );
     } finally {
       setLoading(false);

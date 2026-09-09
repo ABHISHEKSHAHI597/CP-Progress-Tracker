@@ -28,6 +28,13 @@ export const PORT = Number(process.env.PORT) || 5000;
 export const MONGODB_URI = process.env.MONGODB_URI;
 export const JWT_SECRET = process.env.JWT_SECRET;
 
+/**
+ * How many proxies sit in front of the app, so express-rate-limit can tell one
+ * visitor from another. Vercel forwards to Railway, and Railway forwards to
+ * here, which is two. Get this wrong and every visitor shares one rate limit.
+ */
+export const TRUST_PROXY = Number(process.env.TRUST_PROXY ?? 2);
+
 /** FRONTEND_URL may list several origins, separated by commas. */
 export const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || "")
   .split(",")

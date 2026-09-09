@@ -69,12 +69,18 @@ file can cover the dev server and the deployed site at once.
 ### `frontend/.env.development` and `frontend/.env.production`
 
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=/api
 ```
 
+A path, not a URL. The app calls its own origin and something in front forwards
+the request: Vite's proxy in development and local preview, and the rewrite in
+`frontend/vercel.json` in production. The API's hostname never reaches the
+browser, which keeps the site working on networks that cannot resolve it, and
+makes every request same-origin.
+
 Vite picks the file by mode: `npm run dev` reads the first, `npm run build`
-reads the second. Point the production one at your deployed API. Values are
-baked into the bundle at build time, so never put a secret in a `VITE_` variable.
+reads the second. Values are baked into the bundle at build time, so never put a
+secret in a `VITE_` variable.
 
 Anything already exported in the shell, or set in a hosting dashboard, beats
 every file. On Vercel and Railway, set the variables there and skip the files.

@@ -119,7 +119,7 @@ function Leaderboard() {
     return (
       <EmptyState
         title="Could not reach the tracker service"
-        hint="The backend is not responding. Start it, then reload this page."
+        hint="The service is not answering right now. Try again in a moment."
       />
     );
   }

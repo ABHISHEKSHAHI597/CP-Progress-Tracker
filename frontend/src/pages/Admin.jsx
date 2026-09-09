@@ -13,6 +13,7 @@ import EmptyState from "../components/EmptyState";
 import BackToTop from "../components/BackToTop";
 
 import { formatRating, relativeTime, tierColor } from "../lib/rank";
+import { clearToken } from "../lib/session";
 
 function Admin() {
   UseDocumentTitle("Admin · CP Tracker");
@@ -50,7 +51,7 @@ function Admin() {
   }, []);
 
   const signOut = () => {
-    sessionStorage.removeItem("token");
+    clearToken();
     navigate("/");
   };
 

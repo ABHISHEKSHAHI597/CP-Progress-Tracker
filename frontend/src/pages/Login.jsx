@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import API from "../services/api";
 import { UseDocumentTitle } from "../hooks/UseDocumentTitle";
 import { BANDS } from "../lib/rank";
+import { isSignedIn, setToken } from "../lib/session";
 
 function Login() {
   UseDocumentTitle("Sign in · CP Tracker");
@@ -35,7 +36,7 @@ function Login() {
 
       const res = await API.post("/admin/login", { username, password });
 
-      sessionStorage.setItem("token", res.data.token);
+      setToken(res.data.token);
       toast.success("Signed in");
 
       navigate("/admin");
@@ -50,6 +51,11 @@ function Login() {
       setLoading(false);
     }
   };
+
+  // Every hook above has run, so this early return is safe.
+  if (isSignedIn()) {
+    return <Navigate to="/admin" replace />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
+import { isSignedIn } from "../lib/session";
+
 const LINKS = [
   { to: "/", label: "Overview", end: true },
   { to: "/leaderboard", label: "Standings" },
@@ -27,6 +29,11 @@ function Wordmark() {
 
 function TopNav() {
   const [open, setOpen] = useState(false);
+
+  // Signed in, Admin returns you to the panel. Signed out, it asks for the
+  // password. Without this, leaving the panel is indistinguishable from
+  // signing out of it.
+  const adminPath = isSignedIn() ? "/admin" : "/login";
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -62,7 +69,7 @@ function TopNav() {
           ))}
 
           <NavLink
-            to="/login"
+            to={adminPath}
             className="text-[14px] text-faint hover:text-paper transition-colors border border-line hover:border-mute rounded-md px-3 py-1.5"
           >
             Admin
@@ -89,7 +96,7 @@ function TopNav() {
       {open && (
         <div className="md:hidden border-t border-line bg-ink">
           <nav className="px-4 py-2" aria-label="Sections">
-            {[...LINKS, { to: "/login", label: "Admin" }].map((link) => (
+            {[...LINKS, { to: adminPath, label: "Admin" }].map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}

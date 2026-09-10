@@ -14,7 +14,7 @@ import { formScore, formatScore } from "../lib/score";
 import { formatRating, problemColor, tierColor } from "../lib/rank";
 
 function ScoreBar({ score, top }) {
-  const width = top > 0 ? Math.max((score / top) * 100, 1.5) : 0;
+  const width = score > 0 && top > 0 ? Math.max((score / top) * 100, 1.5) : 0;
 
   return (
     <span className="block h-[5px] rounded-[2px] bg-ink-3 overflow-hidden mt-2">
@@ -124,17 +124,26 @@ function Leaderboard() {
     );
   }
 
-  const active = users.filter((user) => user.score > 0);
-  const top = active.length ? active[0].score : 0;
+  // Everyone appears, already ordered by score, so a quiet month sinks to the
+  // bottom rather than dropping off the page.
+  const top = users.length ? users[0].score : 0;
 
   const solved = users.reduce((sum, user) => sum + (user.solvedLast30Days || 0), 0);
   const contests = users.reduce((sum, user) => sum + (user.contestsLast30Days || 0), 0);
 
-  const difficulty = active.length
+  // Averaged over the people who actually solved something, so a quiet month
+  // does not drag the figure toward zero.
+  const solvers = users.filter((user) => user.solvedLast30Days > 0);
+
+  const difficulty = solvers.length
     ? Math.round(
-        active.reduce((sum, user) => sum + (user.avgProblemRating30Days || 0), 0) / active.length
+        solvers.reduce((sum, user) => sum + (user.avgProblemRating30Days || 0), 0) / solvers.length
       )
     : 0;
+
+  // An average difficulty of zero is never a real measurement. It means nothing
+  // was solved, or nothing solved carried a difficulty, so show a dash.
+  const windowRating = (value) => (value ? formatRating(value) : "\u2014");
 
   return (
     <div className="space-y-8">
@@ -147,7 +156,7 @@ function Leaderboard() {
 
       <FigureStrip
         items={[
-          { label: "In the running", value: active.length },
+          { label: "Tracked", value: users.length },
           { label: "Problems solved", value: solved },
           { label: "Contests entered", value: contests },
           { label: "Average difficulty", value: difficulty || "—", tone: problemColor(difficulty) },
@@ -155,10 +164,10 @@ function Leaderboard() {
         ]}
       />
 
-      {active.length === 0 ? (
+      {users.length === 0 ? (
         <EmptyState
-          title="Nothing solved in the last 30 days"
-          hint="Standings fill in as soon as anyone on the roster submits an accepted solution."
+          title="No one is being tracked yet"
+          hint="Sign in as an admin and add a Codeforces handle to start the standings."
         />
       ) : (
         <>
@@ -179,7 +188,7 @@ function Leaderboard() {
               </thead>
 
               <tbody>
-                {active.map((user, index) => (
+                {users.map((user, index) => (
                   <tr
                     key={user._id}
                     className="border-b border-line-soft last:border-b-0 hover:bg-ink-2 transition-colors"
@@ -225,14 +234,14 @@ function Leaderboard() {
                       className="py-3.5 px-3 text-right figure text-[14px]"
                       style={{ color: problemColor(user.avgProblemRating30Days) }}
                     >
-                      {formatRating(user.avgProblemRating30Days)}
+                      {windowRating(user.avgProblemRating30Days)}
                     </td>
 
                     <td
                       className="py-3.5 px-3 text-right figure text-[14px]"
                       style={{ color: problemColor(user.medianProblemRating30Days) }}
                     >
-                      {formatRating(user.medianProblemRating30Days)}
+                      {windowRating(user.medianProblemRating30Days)}
                     </td>
 
                     <td className="py-3.5 pl-3 pr-5 text-right">
@@ -249,7 +258,7 @@ function Leaderboard() {
 
           {/* Rows — phones and tablets */}
           <div className="lg:hidden border border-line rounded-lg overflow-hidden">
-            {active.map((user, index) => (
+            {users.map((user, index) => (
               <div
                 key={user._id}
                 className="border-b border-line-soft last:border-b-0 px-3 sm:px-4 py-3.5"
@@ -291,12 +300,12 @@ function Leaderboard() {
                     { label: "Contests", value: user.contestsLast30Days ?? 0 },
                     {
                       label: "Avg",
-                      value: formatRating(user.avgProblemRating30Days),
+                      value: windowRating(user.avgProblemRating30Days),
                       tone: problemColor(user.avgProblemRating30Days),
                     },
                     {
                       label: "Median",
-                      value: formatRating(user.medianProblemRating30Days),
+                      value: windowRating(user.medianProblemRating30Days),
                       tone: problemColor(user.medianProblemRating30Days),
                     },
                   ].map((item) => (
@@ -317,13 +326,6 @@ function Leaderboard() {
         </>
       )}
 
-      {users.length > active.length && (
-        <p className="text-faint text-[12.5px]">
-          {users.length - active.length} tracked{" "}
-          {users.length - active.length === 1 ? "user has" : "users have"} no solves in the last 30
-          days and do not appear above.
-        </p>
-      )}
     </div>
   );
 }

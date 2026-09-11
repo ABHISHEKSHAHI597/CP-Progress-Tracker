@@ -91,21 +91,34 @@ export const mapContestHistory = (contests) =>
   }));
 
 /**
- * The four rolling figures the standings are built from.
+ * The rolling figures the standings are built from.
  *
- * Distinct problems give the solved count, while every accepted submission in
- * the window feeds the average and median. That asymmetry is how the score has
- * always been calculated, so it is preserved deliberately.
+ * Every figure the score multiplies together is drawn from the same set: one
+ * entry per distinct problem, rated problems only. Re-solving something must
+ * not move the average, and an unrated problem must not count toward a total
+ * the average cannot see, or the two terms describe different sets of work.
+ *
+ * `solvedLast30Days` is the exception. It is what the site displays, so it
+ * stays a plain count of everything solved. `ratedSolvedLast30Days` is what
+ * the score uses.
  */
 export function windowStats(windowSolves, contestHistory) {
   const cutoff = windowCutoff();
 
   const inWindow = (windowSolves || []).filter((entry) => timeOf(entry.at) > cutoff);
 
-  const ratings = inWindow
-    .map((entry) => entry.rating)
-    .filter(Boolean)
-    .sort((a, b) => a - b);
+  // First sighting wins. A problem's rating does not change between solves, so
+  // which accepted submission it came from does not matter.
+  const ratingByProblem = new Map();
+
+  for (const entry of inWindow) {
+    if (!entry.rating) continue;
+    if (ratingByProblem.has(entry.key)) continue;
+
+    ratingByProblem.set(entry.key, entry.rating);
+  }
+
+  const ratings = [...ratingByProblem.values()].sort((a, b) => a - b);
 
   const contests = (contestHistory || []).filter(
     (contest) => contest.contestTime && timeOf(contest.contestTime) > cutoff
@@ -122,6 +135,7 @@ export function windowStats(windowSolves, contestHistory) {
 
   return {
     solvedLast30Days: new Set(inWindow.map((entry) => entry.key)).size,
+    ratedSolvedLast30Days: ratings.length,
     contestsLast30Days: contests.length,
     avgProblemRating30Days: ratings.length
       ? Number((ratings.reduce((sum, value) => sum + value, 0) / ratings.length).toFixed(1))

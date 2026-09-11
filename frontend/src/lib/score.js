@@ -3,7 +3,7 @@
  *
  *   score = Q · (A/1000)² · 2^((A − U)/400) · (1 + 0.05·C)
  *
- *   Q  problems solved in the last 30 days
+ *   Q  distinct rated problems solved in the last 30 days
  *   A  their average difficulty
  *   U  the user's current rating
  *   C  contests entered in the last 30 days
@@ -12,7 +12,9 @@
  * alone does not carry anyone to the top of the standings.
  */
 export function formScore(user) {
-  const solved = user.solvedLast30Days || 0;
+  // Rated problems only, one per problem, so Q and A describe the same set.
+  // The fallback covers a user the sync has not rewritten yet.
+  const solved = user.ratedSolvedLast30Days ?? user.solvedLast30Days ?? 0;
   const avgDifficulty = user.avgProblemRating30Days || 0;
   const contests = user.contestsLast30Days || 0;
 

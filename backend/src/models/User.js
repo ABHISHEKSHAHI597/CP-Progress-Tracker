@@ -64,6 +64,12 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    /** Distinct rated problems in the window. This is what the score uses. */
+    ratedSolvedLast30Days: {
+      type: Number,
+      default: 0,
+    },
+
     contestCount: {
       type: Number,
       default: 0,

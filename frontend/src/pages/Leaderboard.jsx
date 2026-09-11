@@ -63,7 +63,7 @@ function HowItWorks() {
 
           <dl className="space-y-2.5">
             {[
-              ["Q", "problems solved in the last 30 days"],
+              ["Q", "rated problems solved in the last 30 days"],
               ["A", "their average difficulty"],
               ["U", "your current rating"],
               ["C", "contests entered in the last 30 days"],

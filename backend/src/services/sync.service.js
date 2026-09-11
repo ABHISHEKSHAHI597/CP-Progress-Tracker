@@ -190,6 +190,7 @@ async function applySubmissions(user, submissions) {
     submissions.length === 0 &&
     user.totalSolved === solvedKeys.size &&
     user.solvedLast30Days === stats.solvedLast30Days &&
+    user.ratedSolvedLast30Days === stats.ratedSolvedLast30Days &&
     user.contestsLast30Days === stats.contestsLast30Days &&
     user.avgProblemRating30Days === stats.avgProblemRating30Days &&
     user.medianProblemRating30Days === stats.medianProblemRating30Days &&

@@ -2,15 +2,17 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import API from "../services/api";
 import { UseDocumentTitle } from "../hooks/UseDocumentTitle";
 import { BANDS } from "../lib/rank";
-import { isSignedIn, setToken } from "../lib/session";
+import { useAuth } from "../lib/auth-context";
+import Loader from "../components/Loader";
 
 function Login() {
   UseDocumentTitle("Sign in · CP Tracker");
 
   const navigate = useNavigate();
+
+  const { status, signIn } = useAuth();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -34,9 +36,8 @@ function Login() {
     try {
       setLoading(true);
 
-      const res = await API.post("/admin/login", { username, password });
+      await signIn(username, password);
 
-      setToken(res.data.token);
       toast.success("Signed in");
 
       navigate("/admin");
@@ -52,8 +53,20 @@ function Login() {
     }
   };
 
-  // Every hook above has run, so this early return is safe.
-  if (isSignedIn()) {
+  // Every hook above has run, so these early returns are safe.
+  //
+  // The cookie cannot be read from here, so on a fresh load the answer is not
+  // in yet. Waiting is what keeps an admin who is already signed in from being
+  // shown the form for a moment before the redirect.
+  if (status === "checking") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader label="Checking your session" />
+      </div>
+    );
+  }
+
+  if (status === "in") {
     return <Navigate to="/admin" replace />;
   }
 

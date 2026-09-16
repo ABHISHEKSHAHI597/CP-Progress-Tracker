@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
-import { isSignedIn } from "../lib/session";
+import { useAuth } from "../lib/auth-context";
 
 const LINKS = [
   { to: "/", label: "Overview", end: true },
@@ -30,10 +30,13 @@ function Wordmark() {
 function TopNav() {
   const [open, setOpen] = useState(false);
 
+  const { status } = useAuth();
+
   // Signed in, Admin returns you to the panel. Signed out, it asks for the
   // password. Without this, leaving the panel is indistinguishable from
-  // signing out of it.
-  const adminPath = isSignedIn() ? "/admin" : "/login";
+  // signing out of it. While the session is still being checked, point at the
+  // login route: it redirects on to the panel by itself if the cookie is good.
+  const adminPath = status === "in" ? "/admin" : "/login";
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";

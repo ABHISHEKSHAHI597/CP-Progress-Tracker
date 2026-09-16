@@ -13,12 +13,14 @@ import EmptyState from "../components/EmptyState";
 import BackToTop from "../components/BackToTop";
 
 import { formatRating, relativeTime, tierColor } from "../lib/rank";
-import { clearToken } from "../lib/session";
+import { useAuth } from "../lib/auth-context";
 
 function Admin() {
   UseDocumentTitle("Admin · CP Tracker");
 
   const navigate = useNavigate();
+
+  const { signOut } = useAuth();
 
   const [users, setUsers] = useState([]);
   const [handle, setHandle] = useState("");
@@ -50,8 +52,9 @@ function Admin() {
     };
   }, []);
 
-  const signOut = () => {
-    clearToken();
+  const handleSignOut = async () => {
+    // Clearing the cookie is the server's job, so this has to wait for it.
+    await signOut();
     navigate("/");
   };
 
@@ -123,7 +126,7 @@ function Admin() {
 
             <button
               type="button"
-              onClick={signOut}
+              onClick={handleSignOut}
               className="text-[13px] px-3 py-1.5 rounded-md border border-line text-mute
                          hover:text-paper hover:border-mute transition-colors"
             >

@@ -31,6 +31,17 @@ export const addUser = async (req, res) => {
   try {
     const { handle } = req.body;
 
+    // A JSON body can hold an object where a string is expected, and an
+    // object reaching a query becomes a Mongo operator — {"$ne": null} would
+    // match a user that was never named. Rejecting anything but a non-empty
+    // string closes that off at the edge, which is why no sanitiser runs
+    // over the request globally.
+    if (typeof handle !== "string" || handle.trim() === "") {
+      return res.status(400).json({
+        message: "Enter a Codeforces handle",
+      });
+    }
+
     const exists = await User.findOne({
       handle,
     });
@@ -145,11 +156,25 @@ export const deleteUser = async (
   req,
   res
 ) => {
-  await User.findByIdAndDelete(
-    req.params.id
-  );
+  try {
+    // A path segment is always a string, so this cannot carry a query
+    // operator, but an id that is not an ObjectId still throws.
+    const removed = await User.findByIdAndDelete(
+      req.params.id
+    );
 
-  res.json({
-    message: "User removed",
-  });
+    if (!removed) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.json({
+      message: "User removed",
+    });
+  } catch {
+    res.status(400).json({
+      message: "Invalid user id",
+    });
+  }
 };

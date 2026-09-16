@@ -41,7 +41,18 @@ export const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || "")
   .map((origin) => origin.trim().replace(/\/$/, ""))
   .filter(Boolean);
 
-const missing = ["MONGODB_URI", "JWT_SECRET"].filter((key) => !process.env[key]);
+/**
+ * FRONTEND_URL is only optional in development. In production an empty
+ * allowlist would once have let CORS accept every origin, and because the site
+ * reaches the API through a rewrite that sends no Origin at all, nothing about
+ * normal use would have looked wrong. Refusing to boot is the one signal that
+ * cannot be missed.
+ */
+const required = ["MONGODB_URI", "JWT_SECRET"];
+
+if (mode === "production") required.push("FRONTEND_URL");
+
+const missing = required.filter((key) => !process.env[key]);
 
 if (missing.length) {
   console.error(

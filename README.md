@@ -163,13 +163,20 @@ which is also how an existing database migrates itself after this is deployed.
 ```http
 GET    /health
 GET    /api/users
-POST   /api/users            admin token required
-POST   /api/users/:id/refresh   rate limited, no token
-DELETE /api/users/:id        admin token required
-POST   /api/admin/login
+POST   /api/users            admin session required
+POST   /api/users/:id/refresh   rate limited, no session
+DELETE /api/users/:id        admin session required
+POST   /api/admin/login      sets the session cookie
+POST   /api/admin/logout     clears it
+GET    /api/admin/session    reports whether the cookie is still valid
 GET    /api/calendar
 GET    /api/contests/leaderboard
 ```
+
+The admin session is a JWT in an HttpOnly, SameSite=Strict cookie, so no
+script on the page can read it and the browser will not attach it to a request
+from anyone else's site. The app cannot see the cookie either, which is why it
+asks `/api/admin/session` on load instead of checking storage.
 
 ## Deployment
 

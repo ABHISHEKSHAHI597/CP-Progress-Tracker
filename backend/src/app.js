@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
-import { ALLOWED_ORIGINS, TRUST_PROXY } from "./config/env.js";
+import { ALLOWED_ORIGINS, NODE_ENV, TRUST_PROXY } from "./config/env.js";
 import userRoutes from "./routes/user.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import contestRoutes from "./routes/contest.routes.js";
@@ -19,7 +20,17 @@ app.use(
     // FRONTEND_URL can list several origins, so one build serves the local
     // dev server and the deployed site without editing code.
     origin(origin, callback) {
-      if (!origin || ALLOWED_ORIGINS.length === 0) return callback(null, true);
+      // Same-origin calls and the Vercel rewrite, which is a server-to-server
+      // hop, carry no Origin header. CORS does not apply to either.
+      if (!origin) return callback(null, true);
+
+      // An empty allowlist used to mean "allow everyone", which failed open
+      // silently whenever FRONTEND_URL was missing. In production that is now
+      // a boot failure (see config/env.js); in development it stays open so a
+      // local setup works without configuring anything.
+      if (ALLOWED_ORIGINS.length === 0) {
+        return callback(null, NODE_ENV !== "production");
+      }
 
       const allowed = ALLOWED_ORIGINS.includes(origin.replace(/\/$/, ""));
 
@@ -33,6 +44,10 @@ app.use(
 app.use(helmet());
 
 app.use(express.json());
+
+// The admin session travels as an HttpOnly cookie, so it has to be parsed
+// before any route that reads it.
+app.use(cookieParser());
 
 app.get("/health", (req,res) => {
   res.send("Backend is running")

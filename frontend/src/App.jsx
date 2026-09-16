@@ -3,6 +3,7 @@ import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AuthProvider from "./components/AuthProvider";
 
 import Home from "./pages/Home";
 import Leaderboard from "./pages/Leaderboard";
@@ -38,33 +39,35 @@ function NotFound() {
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
+      <AuthProvider>
+        <Routes>
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route
+              path="/contests"
+              element={
+                <Suspense fallback={<Loader label="Loading contest history" />}>
+                  <ContestTracker />
+                </Suspense>
+              }
+            />
+            <Route path="/calendar" element={<ContestCalendar />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+
+          <Route path="/login" element={<Login />} />
+
           <Route
-            path="/contests"
+            path="/admin"
             element={
-              <Suspense fallback={<Loader label="Loading contest history" />}>
-                <ContestTracker />
-              </Suspense>
+              <ProtectedRoute>
+                <Admin />
+              </ProtectedRoute>
             }
           />
-          <Route path="/calendar" element={<ContestCalendar />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-
-        <Route path="/login" element={<Login />} />
-
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <Admin />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

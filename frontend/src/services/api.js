@@ -1,35 +1,28 @@
 import axios from "axios";
 
-import { clearToken, getToken } from "../lib/session";
-
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-});
 
-API.interceptors.request.use((config) => {
-  const token = getToken();
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
+  // The app and the API share an origin, so the session cookie rides along
+  // regardless. This keeps it working if the API is ever pointed at its own
+  // hostname instead of going through the proxy.
+  withCredentials: true,
 });
 
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Tokens last an hour. When one expires the session is gone, so drop it and
-    // ask for the password again rather than leaving a page that quietly fails.
-    // A rejected sign-in also answers 401 and must be left to the form.
-    const isSignInAttempt = (error.config?.url || "").includes("/admin/login");
+    // Sessions last an hour. When one expires the cookie is gone and every
+    // call starts answering 401, so tell the app to drop back to signed out
+    // rather than leaving a page that quietly fails.
+    //
+    // Sign-in answers 401 for a wrong password too, and that belongs to the
+    // form. The session check never answers 401 at all, by design.
+    const url = error.config?.url || "";
+    const isSignInAttempt = url.includes("/admin/login");
 
     if (error.response?.status === 401 && !isSignInAttempt) {
-      clearToken();
-
-      if (window.location.pathname !== "/login") {
-        window.location.assign("/login");
-      }
+      window.dispatchEvent(new Event("auth:expired"));
     }
 
     return Promise.reject(error);

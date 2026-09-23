@@ -35,6 +35,12 @@ export const JWT_SECRET = process.env.JWT_SECRET;
  */
 export const TRUST_PROXY = Number(process.env.TRUST_PROXY ?? 2);
 
+/**
+ * Shared with the Vercel middleware, which adds it to every forwarded API call.
+ * When set, the API refuses requests that lack it. See middleware/proxyGate.js.
+ */
+export const PROXY_SECRET = process.env.PROXY_SECRET || "";
+
 /** FRONTEND_URL may list several origins, separated by commas. */
 export const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || "")
   .split(",")
@@ -59,4 +65,10 @@ if (missing.length) {
     `Missing ${missing.join(" and ")} in backend/.env — see ENV.md for what each value should be.`
   );
   process.exit(1);
+}
+
+if (mode === "production" && !PROXY_SECRET) {
+  console.warn(
+    "PROXY_SECRET is not set, so the API answers anyone who calls it directly and the login rate limit can be bypassed."
+  );
 }

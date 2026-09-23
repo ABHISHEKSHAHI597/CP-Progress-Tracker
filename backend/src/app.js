@@ -8,6 +8,7 @@ import adminRoutes from "./routes/admin.routes.js";
 import contestRoutes from "./routes/contest.routes.js";
 import calendarRoutes from "./routes/calendar.routes.js";
 import helmet from "helmet";
+import proxyGate from "./middleware/proxyGate.js";
 
 const app = express();
 
@@ -52,6 +53,9 @@ app.use(cookieParser());
 app.get("/health", (req,res) => {
   res.send("Backend is running")
 })
+
+// /health stays outside the gate so the host's health check can reach it.
+app.use("/api", proxyGate);
 
 app.use(
   "/api/users",

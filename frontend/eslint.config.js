@@ -18,4 +18,11 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // Runs on Vercel's servers, not in the browser.
+    files: ['middleware.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])

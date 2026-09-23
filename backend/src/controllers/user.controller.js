@@ -42,9 +42,10 @@ export const addUser = async (req, res) => {
       });
     }
 
+    // Codeforces handles ignore case, so "Tourist" is already "tourist".
     const exists = await User.findOne({
-      handle,
-    });
+      handle: handle.trim(),
+    }).collation({ locale: "en", strength: 2 });
 
     if (exists) {
       return res.status(400).json({
@@ -52,9 +53,9 @@ export const addUser = async (req, res) => {
       });
     }
 
-    const cfUser = await getUserInfo(handle);
+    const cfUser = await getUserInfo(handle.trim());
 
-    const stats = await buildUserStats(handle);
+    const stats = await buildUserStats(cfUser.handle);
 
     const created = await User.create({
       handle: cfUser.handle,
@@ -90,8 +91,26 @@ export const addUser = async (req, res) => {
 
     res.status(201).json(user);
   } catch (error) {
+    // Codeforces answers 400 for a handle it does not know.
+    if (error.status === 400) {
+      return res.status(404).json({
+        message: "No Codeforces user with that handle",
+      });
+    }
+
+    // Two adds of the same handle racing past the check above.
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "User already exists",
+      });
+    }
+
+    // The raw message can carry database or network internals, so it stays
+    // in the server log.
+    console.error("Add user failed:", error);
+
     res.status(500).json({
-      message: error.message,
+      message: "Could not add that handle. Try again shortly.",
     });
   }
 };
@@ -106,8 +125,10 @@ export const getUsers = async (req, res) => {
 
     res.status(200).json(users);
   } catch (error) {
+    console.error("Roster fetch failed:", error);
+
     res.status(500).json({
-      message: error.message,
+      message: "Could not load the roster",
     });
   }
 };

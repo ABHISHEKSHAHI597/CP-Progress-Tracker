@@ -1,5 +1,7 @@
 import rateLimit from "express-rate-limit";
 
+import clientKey from "./clientKey.js";
+
 /**
  * The on-demand refresh spends the shared Codeforces budget, so one visitor
  * cannot be allowed to drain it. The per-handle cooldown in the controller is
@@ -10,6 +12,8 @@ const refreshLimiter = rateLimit({
   windowMs: 60 * 1000,
 
   max: 12,
+
+  keyGenerator: clientKey,
 
   standardHeaders: true,
 

@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 import User from "../models/User.js";
 
 import {
@@ -135,6 +137,13 @@ export const getUsers = async (req, res) => {
 
 export const refreshUser = async (req, res) => {
   let handle;
+
+  // Otherwise the cast error below would be reported as Codeforces failing.
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(400).json({
+      message: "Invalid user id",
+    });
+  }
 
   try {
     const user = await User.findById(req.params.id);

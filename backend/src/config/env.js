@@ -29,9 +29,10 @@ export const MONGODB_URI = process.env.MONGODB_URI;
 export const JWT_SECRET = process.env.JWT_SECRET;
 
 /**
- * How many proxies sit in front of the app, so express-rate-limit can tell one
- * visitor from another. Vercel forwards to Railway, and Railway forwards to
- * here, which is two. Get this wrong and every visitor shares one rate limit.
+ * How many proxies sit in front of the app, which decides req.ip. The rate
+ * limiters no longer depend on it once PROXY_SECRET is set, because Vercel then
+ * sends the visitor's address directly (see middleware/clientKey.js). Two was
+ * right for Vercel -> Railway; Render's edge may differ.
  */
 export const TRUST_PROXY = Number(process.env.TRUST_PROXY ?? 2);
 

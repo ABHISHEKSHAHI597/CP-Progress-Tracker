@@ -1,9 +1,12 @@
+import { ipAddress } from "@vercel/functions";
 import { next, rewrite } from "@vercel/functions/middleware";
 
 /**
  * Runs on Vercel, never in the browser. Forwards /api to the backend with a
  * secret header the backend checks (backend/src/middleware/proxyGate.js), so
- * the API only answers calls that came through here.
+ * the API only answers calls that came through here. It also passes on the
+ * visitor's address, which the backend's rate limiters bucket by (see
+ * backend/src/middleware/clientKey.js).
  *
  * Both values are Vercel environment variables. They must not carry the VITE_
  * prefix, which would bake them into the public bundle.
@@ -29,6 +32,12 @@ export default function middleware(request) {
 
   const headers = new Headers(request.headers);
   headers.set("x-proxy-secret", secret);
+
+  // set, not append: whatever the caller put in this header is thrown away.
+  const ip = ipAddress(request);
+
+  if (ip) headers.set("x-client-ip", ip);
+  else headers.delete("x-client-ip");
 
   return rewrite(destination, {
     request: { headers },

@@ -7,7 +7,7 @@ import tailwindcss from "@tailwindcss/vite";
  * it to the backend: these proxies locally, a Vercel rewrite in production.
  *
  * That keeps the API's hostname out of the browser entirely, which matters
- * because some mobile networks fail to resolve the Railway domain. It also
+ * because some mobile networks fail to resolve the backend's domain. It also
  * makes every request same-origin, so CORS never applies to a visitor.
  */
 const apiProxy = {

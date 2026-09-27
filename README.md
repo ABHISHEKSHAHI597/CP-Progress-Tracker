@@ -83,7 +83,7 @@ reads the second. Values are baked into the bundle at build time, so never put a
 secret in a `VITE_` variable.
 
 Anything already exported in the shell, or set in a hosting dashboard, beats
-every file. On Vercel and Railway, set the variables there and skip the files.
+every file. On Vercel and Render, set the variables there and skip the files.
 
 ---
 
@@ -180,9 +180,13 @@ asks `/api/admin/session` on load instead of checking storage.
 
 ## Deployment
 
-Frontend on Vercel, backend on Railway. Set the environment variables in each
+Frontend on Vercel, backend on Render. Set the environment variables in each
 dashboard rather than shipping the files, and add the deployed site's origin to
 `FRONTEND_URL` so CORS lets it through.
+
+The browser only talks to Vercel, which forwards `/api` to the backend. Give
+both sides the same `PROXY_SECRET` and set `API_ORIGIN` on Vercel to the
+backend's URL; the backend then refuses API calls that skip the proxy.
 
 ## Licence
 

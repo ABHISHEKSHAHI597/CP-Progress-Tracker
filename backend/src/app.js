@@ -16,6 +16,10 @@ const app = express();
 // limiters would put all visitors in one bucket.
 app.set("trust proxy", TRUST_PROXY);
 
+// First, so every response carries the headers and drops X-Powered-By —
+// including the ones CORS turns away below.
+app.use(helmet());
+
 app.use(
   cors({
     // FRONTEND_URL can list several origins, so one build serves the local
@@ -42,9 +46,8 @@ app.use(
   })
 );
 
-app.use(helmet());
-
-app.use(express.json());
+// Every body this API accepts is a handle or a username and password.
+app.use(express.json({ limit: "10kb" }));
 
 // The admin session travels as an HttpOnly cookie, so it has to be parsed
 // before any route that reads it.
@@ -73,5 +76,23 @@ app.use(
 );
 
 app.use("/api/calendar", calendarRoutes);
+
+// Anything unhandled lands here instead of Express's default page, which
+// prints the stack trace whenever NODE_ENV is not "production". A refused
+// origin is the caller's fault, so it answers 403 rather than 500.
+// eslint-disable-next-line no-unused-vars
+app.use((error, req, res, next) => {
+  if (error.message?.startsWith("Origin ")) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  if (error.type === "entity.too.large" || error.type === "entity.parse.failed") {
+    return res.status(error.status).json({ message: "Invalid request body" });
+  }
+
+  console.error("Unhandled error:", error);
+
+  res.status(500).json({ message: "Internal server error" });
+});
 
 export default app;

@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -19,6 +20,13 @@ import {
  */
 const MAX_FAILED_LOGINS = 8;
 const LOCKOUT_MS = 15 * 60 * 1000;
+
+/**
+ * Compared against when the username does not exist. Without it an unknown
+ * name answers instantly and a real one only after bcrypt, so the response
+ * time alone would tell an attacker which usernames are real.
+ */
+const DUMMY_HASH = bcrypt.hashSync(crypto.randomUUID(), 10);
 
 export const loginAdmin = async (
   req,
@@ -54,6 +62,8 @@ export const loginAdmin = async (
       });
 
     if (!admin) {
+      await bcrypt.compare(password, DUMMY_HASH);
+
       return res.status(401).json({
         message: "Invalid credentials",
       });

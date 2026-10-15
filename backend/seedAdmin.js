@@ -19,14 +19,14 @@ await mongoose.connect(MONGODB_URI);
 const existing = await Admin.findOne({ username });
 
 if (existing) {
-  existing.password = await bcrypt.hash(password, 10);
+  existing.password = await bcrypt.hash(password, 12);
   await existing.save();
 
   console.log(`Password updated for admin "${username}".`);
 } else {
   await Admin.create({
     username,
-    password: await bcrypt.hash(password, 10),
+    password: await bcrypt.hash(password, 12),
   });
 
   console.log(`Admin "${username}" created.`);

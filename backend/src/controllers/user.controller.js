@@ -44,6 +44,14 @@ export const addUser = async (req, res) => {
       });
     }
 
+    // Codeforces handles are letters, digits, "_", "." and "-", so anything
+    // else is a typo or junk and never needs to reach Codeforces or the DB.
+    if (!/^[\w.-]{1,32}$/.test(handle.trim())) {
+      return res.status(400).json({
+        message: "That is not a valid Codeforces handle",
+      });
+    }
+
     // Codeforces handles ignore case, so "Tourist" is already "tourist".
     const exists = await User.findOne({
       handle: handle.trim(),

@@ -177,8 +177,8 @@ function Leaderboard() {
           hint="Sign in as an admin and add a Codeforces handle to start the standings."
         />
       ) : (
-        <>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4 -mb-2">
+        <div className="space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <SearchBox
               value={query}
               onChange={setQuery}
@@ -363,7 +363,7 @@ function Leaderboard() {
               </div>
             </>
           )}
-        </>
+        </div>
       )}
 
     </div>

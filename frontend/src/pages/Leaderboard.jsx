@@ -182,7 +182,7 @@ function Leaderboard() {
             <SearchBox
               value={query}
               onChange={setQuery}
-              placeholder="Search handle, rank or id"
+              placeholder="Search by handle"
               className="w-full sm:w-72 sm:order-last"
             />
 
@@ -196,7 +196,7 @@ function Leaderboard() {
           {shown.length === 0 ? (
             <EmptyState
               title={`No one matches \u201c${query.trim()}\u201d`}
-              hint="Try part of a handle, a rank like pupil, or a Codeforces id."
+              hint="Try part of a handle."
               action={
                 <button
                   type="button"

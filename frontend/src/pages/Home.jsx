@@ -107,7 +107,7 @@ function Home() {
                 <SearchBox
                   value={query}
                   onChange={setQuery}
-                  placeholder="Search handle, rank or id"
+                  placeholder="Search by handle"
                   className="w-full sm:w-64"
                 />
 
@@ -135,7 +135,7 @@ function Home() {
             {sorted.length === 0 ? (
               <EmptyState
                 title={`No one matches “${query.trim()}”`}
-                hint="Try part of a handle, a rank like pupil, or a Codeforces id."
+                hint="Try part of a handle."
                 action={
                   <button
                     type="button"

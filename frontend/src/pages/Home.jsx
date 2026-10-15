@@ -9,6 +9,8 @@ import RatingLadder from "../components/RatingLadder";
 import RosterRow from "../components/RosterRow";
 import Loader from "../components/Loader";
 import EmptyState from "../components/EmptyState";
+import SearchBox from "../components/SearchBox";
+import { matchesQuery } from "../lib/search";
 import { tierColor } from "../lib/rank";
 
 const SORTS = [
@@ -25,6 +27,7 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [sort, setSort] = useState("rating");
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     let live = true;
@@ -61,7 +64,9 @@ function Home() {
 
   const peak = rated.length ? Math.max(...rated.map((user) => user.rating)) : 0;
 
-  const sorted = [...users].sort((a, b) => (b[sort] || 0) - (a[sort] || 0));
+  const sorted = users
+    .filter((user) => matchesQuery(user, query))
+    .sort((a, b) => (b[sort] || 0) - (a[sort] || 0));
 
   return (
     <div className="space-y-10">
@@ -90,45 +95,72 @@ function Home() {
           />
 
           <section>
-            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3 mb-3">
+            <div className="flex flex-col gap-3 mb-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
               <h2 className="text-[19px] font-semibold">
                 Roster
-                <span className="text-faint font-normal ml-2 text-[15px]">{users.length}</span>
+                <span className="text-faint font-normal ml-2 text-[15px]">
+                  {query.trim() ? `${sorted.length} of ${users.length}` : users.length}
+                </span>
               </h2>
 
-              <div className="flex items-center gap-1 text-[13px]">
-                <span className="text-faint mr-1.5">Sort by</span>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:justify-end lg:gap-4">
+                <SearchBox
+                  value={query}
+                  onChange={setQuery}
+                  placeholder="Search handle, rank or id"
+                  className="w-full sm:w-64"
+                />
 
-                {SORTS.map((option) => (
-                  <button
-                    key={option.key}
-                    type="button"
-                    onClick={() => setSort(option.key)}
-                    className={`px-2.5 py-1 rounded transition-colors ${
-                      sort === option.key
-                        ? "text-paper bg-ink-3"
-                        : "text-mute hover:text-paper"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+                <div className="flex flex-wrap items-center gap-1 text-[13px]">
+                  <span className="text-faint mr-1.5">Sort by</span>
+
+                  {SORTS.map((option) => (
+                    <button
+                      key={option.key}
+                      type="button"
+                      onClick={() => setSort(option.key)}
+                      className={`px-2.5 py-1 rounded transition-colors ${
+                        sort === option.key
+                          ? "text-paper bg-ink-3"
+                          : "text-mute hover:text-paper"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="border border-line rounded-lg overflow-hidden">
-              {sorted.map((user) => (
-                <RosterRow
-                  key={user._id}
-                  user={user}
-                  onRefreshed={(fresh) =>
-                    setUsers((current) =>
-                      current.map((entry) => (entry._id === fresh._id ? fresh : entry))
-                    )
-                  }
-                />
-              ))}
-            </div>
+            {sorted.length === 0 ? (
+              <EmptyState
+                title={`No one matches “${query.trim()}”`}
+                hint="Try part of a handle, a rank like pupil, or a Codeforces id."
+                action={
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    className="text-[13px] text-mute hover:text-paper transition-colors"
+                  >
+                    Clear search
+                  </button>
+                }
+              />
+            ) : (
+              <div className="border border-line rounded-lg overflow-hidden">
+                {sorted.map((user) => (
+                  <RosterRow
+                    key={user._id}
+                    user={user}
+                    onRefreshed={(fresh) =>
+                      setUsers((current) =>
+                        current.map((entry) => (entry._id === fresh._id ? fresh : entry))
+                      )
+                    }
+                  />
+                ))}
+              </div>
+            )}
 
             <p className="text-faint text-[12.5px] mt-3">
               Open a row for peak rank, activity and the problems they solved most recently.
